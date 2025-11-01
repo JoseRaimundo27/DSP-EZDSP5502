@@ -1,0 +1,6 @@
+"./src/float_dft128.obj"
+"./src/float_dft128Test.obj"
+"./src/float_mag128.obj"
+"../VC5502.cmd"
+-llibc.a
+-l"/home/caco/Área de trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/lib/csl5502.lib"
