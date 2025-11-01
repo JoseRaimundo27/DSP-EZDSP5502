@@ -1,0 +1,7 @@
+"./src/FFT_iFFT_Test.obj"
+"./src/ibit_rev.obj"
+"./src/intrinsic_fft.obj"
+"./src/w_table.obj"
+"../VC5502.cmd"
+-llibc.a
+-l"/home/caco/Área de trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/lib/csl5502.lib"
