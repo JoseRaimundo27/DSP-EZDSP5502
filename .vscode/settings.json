@@ -1,0 +1,9 @@
+{
+    "files.associations": {
+        "aic3204_codec_init.h": "c",
+        "ezdsp5502_i2c.h": "c",
+        "ezdsp5502.h": "c",
+        "ezdsp5502_i2cgpio.h": "c",
+        "stdio.h": "c"
+    }
+}
