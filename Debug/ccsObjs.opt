@@ -1,0 +1,9 @@
+"./aic3204_codec_init.obj"
+"./main.obj"
+"./lib/ezdsp5502.obj"
+"./lib/ezdsp5502_i2c.obj"
+"./lib/ezdsp5502_i2cgpio.obj"
+"./lib/ezdsp5502_mcbsp.obj"
+"../VC5502.cmd"
+-llibc.a
+-l"/home/caco/Área de trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/lib/csl5502.lib"
