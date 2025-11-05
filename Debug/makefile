@@ -10,12 +10,11 @@ GEN_CMDS__FLAG :=
 ORDERED_OBJS += \
 "./main_dma4.obj" \
 "./vectors_dma4.obj" \
-"./lib/aic3204_codec_init.obj" \
 "./lib/ezdsp5502.obj" \
 "./lib/ezdsp5502_i2c.obj" \
 "./lib/ezdsp5502_i2cgpio.obj" \
 "./lib/ezdsp5502_mcbsp.obj" \
-"../VC5502.cmd" \
+"../dma4.cmd" \
 $(GEN_CMDS__FLAG) \
 -llibc.a \
 -l"/home/caco/Área de trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/lib/csl5502.lib" \
@@ -141,16 +140,16 @@ all: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
 DMA.out: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
 	@echo 'Building target: "$@"'
 	@echo 'Invoking: C5500 Linker'
-	"/home/caco/ti/ccs1281/ccs/tools/compiler/c5500_4.4.1/bin/cl55" -v5502 --memory_model=small -g --define=c5502 --display_error_number --diag_warning=225 --ptrdiff_size=16 -z -m"DMA.map" --stack_size=0x200 --heap_size=0x400 -i"/home/caco/ti/ccs1281/ccs/tools/compiler/c5500_4.4.1/lib" -i"/home/caco/ti/ccs1281/ccs/tools/compiler/c5500_4.4.1/include" --reread_libs --display_error_number --warn_sections --xml_link_info="DMA_linkInfo.xml" --rom_model --sys_stacksize=0x200 -o "DMA.out" $(ORDERED_OBJS)
+	"/home/caco/ti/ccs1281/ccs/tools/compiler/c5500_4.4.1/bin/cl55" -v5502 --memory_model=small -g --define=c5502 --define=CHIP_5502 --display_error_number --diag_warning=225 --ptrdiff_size=16 -z -m"DMA.map" --stack_size=0x200 --heap_size=0x400 -i"/home/caco/ti/ccs1281/ccs/tools/compiler/c5500_4.4.1/lib" -i"/home/caco/ti/ccs1281/ccs/tools/compiler/c5500_4.4.1/include" --reread_libs --display_error_number --warn_sections --xml_link_info="DMA_linkInfo.xml" --rom_model --sys_stacksize=0x200 -o "DMA.out" $(ORDERED_OBJS)
 	@echo 'Finished building target: "$@"'
 	@echo ' '
 
 # Other Targets
 clean:
 	-$(RM) $(EXE_OUTPUTS__QUOTED)
-	-$(RM) "main_dma4.obj" "vectors_dma4.obj" "lib/aic3204_codec_init.obj" "lib/ezdsp5502.obj" "lib/ezdsp5502_i2c.obj" "lib/ezdsp5502_i2cgpio.obj" "lib/ezdsp5502_mcbsp.obj" 
+	-$(RM) "main_dma4.obj" "vectors_dma4.obj" "lib/ezdsp5502.obj" "lib/ezdsp5502_i2c.obj" "lib/ezdsp5502_i2cgpio.obj" "lib/ezdsp5502_mcbsp.obj" 
 	-$(RM) "vectors_dma4.d" 
-	-$(RM) "main_dma4.d" "lib/aic3204_codec_init.d" "lib/ezdsp5502.d" "lib/ezdsp5502_i2c.d" "lib/ezdsp5502_i2cgpio.d" "lib/ezdsp5502_mcbsp.d" 
+	-$(RM) "main_dma4.d" "lib/ezdsp5502.d" "lib/ezdsp5502_i2c.d" "lib/ezdsp5502_i2cgpio.d" "lib/ezdsp5502_mcbsp.d" 
 	-@echo 'Finished clean'
 	-@echo ' '
 

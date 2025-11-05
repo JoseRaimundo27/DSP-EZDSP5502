@@ -4,7 +4,7 @@ main_dma4.obj: ../main_dma4.c
 main_dma4.obj: /home/caco/ti/ccs1281/ccs/tools/compiler/c5500_4.4.1/include/stdio.h
 main_dma4.obj: /home/caco/ti/ccs1281/ccs/tools/compiler/c5500_4.4.1/include/linkage.h
 main_dma4.obj: /home/caco/ti/ccs1281/ccs/tools/compiler/c5500_4.4.1/include/stdarg.h
-main_dma4.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl.h
+main_dma4.obj: /home/caco/workspace_v12/DMA/include/csl_mcbsp.h
 main_dma4.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/_csl.h
 main_dma4.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_chiphal.h
 main_dma4.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_std.h
@@ -40,16 +40,9 @@ main_dma4.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/
 main_dma4.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/_csl.h
 main_dma4.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_irqhal.h
 main_dma4.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_err.h
-main_dma4.obj: /home/caco/workspace_v12/DMA/include/csl_mcbsp.h
 main_dma4.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_mcbsphal.h
-main_dma4.obj: /home/caco/workspace_v12/DMA/include/ezdsp5502.h
-main_dma4.obj: /home/caco/workspace_v12/DMA/include/ezdsp5502_i2c.h
-main_dma4.obj: /home/caco/workspace_v12/DMA/include/ezdsp5502_i2cgpio.h
-main_dma4.obj: /home/caco/workspace_v12/DMA/include/ezdsp5502_mcbsp.h
 main_dma4.obj: /home/caco/workspace_v12/DMA/include/csl_dma.h
 main_dma4.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_dmahal.h
-main_dma4.obj: /home/caco/workspace_v12/DMA/include/aic3204_codec_init.h
-main_dma4.obj: /home/caco/workspace_v12/DMA/include/csl_types.h
 
 ../main_dma4.c:
 
@@ -59,7 +52,7 @@ main_dma4.obj: /home/caco/workspace_v12/DMA/include/csl_types.h
 
 /home/caco/ti/ccs1281/ccs/tools/compiler/c5500_4.4.1/include/stdarg.h:
 
-/home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl.h:
+/home/caco/workspace_v12/DMA/include/csl_mcbsp.h:
 
 /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/_csl.h:
 
@@ -131,23 +124,9 @@ main_dma4.obj: /home/caco/workspace_v12/DMA/include/csl_types.h
 
 /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_err.h:
 
-/home/caco/workspace_v12/DMA/include/csl_mcbsp.h:
-
 /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_mcbsphal.h:
-
-/home/caco/workspace_v12/DMA/include/ezdsp5502.h:
-
-/home/caco/workspace_v12/DMA/include/ezdsp5502_i2c.h:
-
-/home/caco/workspace_v12/DMA/include/ezdsp5502_i2cgpio.h:
-
-/home/caco/workspace_v12/DMA/include/ezdsp5502_mcbsp.h:
 
 /home/caco/workspace_v12/DMA/include/csl_dma.h:
 
 /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_dmahal.h:
-
-/home/caco/workspace_v12/DMA/include/aic3204_codec_init.h:
-
-/home/caco/workspace_v12/DMA/include/csl_types.h:
 

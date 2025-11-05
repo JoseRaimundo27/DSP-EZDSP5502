@@ -36,7 +36,7 @@
 // *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.    
 // *                                                                          
 //////////////////////////////////////////////////////////////////////////////
-
+#include <csl_types.h>
 #include "ezdsp5502.h"
 
 /* ------------------------------------------------------------------------ *

@@ -1,22 +1,25 @@
-#define CHIP_5502 1
-
+/*
+ * Copyright (C) 2003 Texas Instruments Incorporated
+ * All Rights Reserved
+ */
+/*
+ *---------main_dma4.c---------
+ * This example places the MCBSP in digital loopback mode and
+ * syncs MCBSP receive with DMA channel 4 and MCBSP transmit 
+ * with DMA channel 5.                                       
+ * The example uses predefined CSL macros and symbolic       
+ * constants to create the initialization values needed for  
+ * the MCBSP and DMA control registers to effect the transfer
+ */
 #include <stdio.h>
 
-#include <csl.h>
 #include <csl_mcbsp.h>
+#include <csl_dma.h>
 #include <csl_irq.h>
-
-#include "ezdsp5502.h"
-#include "ezdsp5502_i2c.h"
-#include "ezdsp5502_i2cgpio.h"
-#include  "ezdsp5502_mcbsp.h"
-#include "csl_dma.h"
-#include "csl_mcbsp.h"
-#include "aic3204_codec_init.h"
 
 //---------Global constants---------
 #define N       128
-volatile Uint16 g_audio_frame_pronto = 0;
+
 //---------Global data definition---------
 
 /* Define transmit and receive buffers */
@@ -25,6 +28,96 @@ Uint16 xmt[N];
 #pragma DATA_SECTION(rcv,"dmaMem")
 Uint16 rcv[N];
 
+
+  MCBSP_Config ConfigLoopBack16= {
+  MCBSP_SPCR1_RMK(
+    MCBSP_SPCR1_DLB_ON,                    /* DLB    = 1 */
+    MCBSP_SPCR1_RJUST_RZF,                 /* RJUST  = 0 */
+    MCBSP_SPCR1_CLKSTP_DISABLE,            /* CLKSTP = 0 */
+    MCBSP_SPCR1_DXENA_NA,                  /* DXENA  = 0 */
+    MCBSP_SPCR1_ABIS_DISABLE,              /* ABIS   = 0 */
+    MCBSP_SPCR1_RINTM_RRDY,                /* RINTM  = 0 */
+    0,                                     /* RSYNCER = 0 */
+    MCBSP_SPCR1_RRST_DISABLE               /* RRST   = 0 */
+   ),
+    MCBSP_SPCR2_RMK(
+    MCBSP_SPCR2_FREE_NO,                   /* FREE   = 0 */
+    MCBSP_SPCR2_SOFT_NO,                   /* SOFT   = 0 */
+    MCBSP_SPCR2_FRST_RESET,                /* FRST   = 0 */
+    MCBSP_SPCR2_GRST_RESET,                /* GRST   = 0 */
+    MCBSP_SPCR2_XINTM_XRDY,                /* XINTM  = 0 */
+    0,                                     /* XSYNCER = N/A */
+    MCBSP_SPCR2_XRST_DISABLE               /* XRST   = 0 */
+   ),
+  MCBSP_RCR1_RMK( 
+  MCBSP_RCR1_RFRLEN1_OF(0),                /* RFRLEN1 = 0 */
+  MCBSP_RCR1_RWDLEN1_16BIT                 /* RWDLEN1 = 5 */
+  ),
+ MCBSP_RCR2_RMK(    
+    MCBSP_RCR2_RPHASE_SINGLE,              /* RPHASE  = 0 */
+    MCBSP_RCR2_RFRLEN2_OF(0),              /* RFRLEN2 = 0 */
+    MCBSP_RCR2_RWDLEN2_8BIT,               /* RWDLEN2 = 0 */
+    MCBSP_RCR2_RCOMPAND_MSB,               /* RCOMPAND = 0 */
+    MCBSP_RCR2_RFIG_YES,                   /* RFIG    = 0 */
+    MCBSP_RCR2_RDATDLY_0BIT                /* RDATDLY = 0 */
+    ),  
+   MCBSP_XCR1_RMK(    
+    MCBSP_XCR1_XFRLEN1_OF(0),              /* XFRLEN1 = 0 */ 
+    MCBSP_XCR1_XWDLEN1_16BIT               /* XWDLEN1 = 5 */
+    
+ ),   
+ MCBSP_XCR2_RMK(   
+    MCBSP_XCR2_XPHASE_SINGLE,              /* XPHASE  = 0 */
+    MCBSP_XCR2_XFRLEN2_OF(0),              /* XFRLEN2 = 0 */
+    MCBSP_XCR2_XWDLEN2_8BIT,               /* XWDLEN2 = 0 */
+    MCBSP_XCR2_XCOMPAND_MSB,               /* XCOMPAND = 0 */
+    MCBSP_XCR2_XFIG_YES,                   /* XFIG    = 0 */
+    MCBSP_XCR2_XDATDLY_0BIT                /* XDATDLY = 0 */
+  ),            
+ MCBSP_SRGR1_RMK( 
+   MCBSP_SRGR1_FWID_OF(1),                /* FWID    = 1 */
+   MCBSP_SRGR1_CLKGDV_OF(1)               /* CLKGDV  = 1 */
+ ),   
+ MCBSP_SRGR2_RMK(  
+    MCBSP_SRGR2_GSYNC_FREE,                /* FREE    = 0 */
+    MCBSP_SRGR2_CLKSP_RISING,              /* CLKSP   = 0 */
+    MCBSP_SRGR2_CLKSM_INTERNAL,            /* CLKSM   = 1 */
+    MCBSP_SRGR2_FSGM_DXR2XSR,              /* FSGM    = 0 */
+    MCBSP_SRGR2_FPER_OF(15)                /* FPER    = 0 */
+ ),  
+ MCBSP_MCR1_DEFAULT,
+ MCBSP_MCR2_DEFAULT, 
+ MCBSP_PCR_RMK(
+   MCBSP_PCR_XIOEN_SP,                     /* XIOEN    = 0   */
+   MCBSP_PCR_RIOEN_SP,                     /* RIOEN    = 0   */
+   MCBSP_PCR_FSXM_INTERNAL,                /* FSXM     = 1   */
+   MCBSP_PCR_FSRM_EXTERNAL,                /* FSRM     = 0   */
+   MCBSP_PCR_CLKXM_OUTPUT,                 /* CLKXM    = 1   */
+   MCBSP_PCR_CLKRM_INPUT,                  /* CLKRM    = 0   */
+   MCBSP_PCR_SCLKME_NO,                    /* SCLKME   = 0   */
+   0,                                      /* DXSTAT = N/A   */
+   MCBSP_PCR_FSXP_ACTIVEHIGH,              /* FSXP     = 0   */
+   MCBSP_PCR_FSRP_ACTIVEHIGH,              /* FSRP     = 0   */
+   MCBSP_PCR_CLKXP_RISING,                 /* CLKXP    = 0   */
+   MCBSP_PCR_CLKRP_FALLING                 /* CLKRP    = 0   */
+ ),
+ MCBSP_RCERA_DEFAULT, 
+ MCBSP_RCERB_DEFAULT, 
+ MCBSP_RCERC_DEFAULT, 
+ MCBSP_RCERD_DEFAULT, 
+ MCBSP_RCERE_DEFAULT, 
+ MCBSP_RCERF_DEFAULT, 
+ MCBSP_RCERG_DEFAULT, 
+ MCBSP_RCERH_DEFAULT, 
+ MCBSP_XCERA_DEFAULT,
+ MCBSP_XCERB_DEFAULT,
+ MCBSP_XCERC_DEFAULT,
+ MCBSP_XCERD_DEFAULT,  
+ MCBSP_XCERE_DEFAULT,
+ MCBSP_XCERF_DEFAULT,  
+ MCBSP_XCERG_DEFAULT,
+ MCBSP_XCERH_DEFAULT
+};     
 
 DMA_Config  dmaRcvConfig = { 
   DMA_DMACSDP_RMK(
@@ -42,7 +135,7 @@ DMA_Config  dmaRcvConfig = {
     DMA_DMACCR_ENDPROG_ON,
     DMA_DMACCR_WP_DEFAULT,
     DMA_DMACCR_REPEAT_OFF,
-    DMA_DMACCR_AUTOINIT_ON,
+    DMA_DMACCR_AUTOINIT_OFF,
     DMA_DMACCR_EN_STOP,
     DMA_DMACCR_PRIO_LOW,
     DMA_DMACCR_FS_DISABLE,
@@ -83,7 +176,7 @@ DMA_Config  dmaXmtConfig = {
     DMA_DMACCR_ENDPROG_ON,
     DMA_DMACCR_WP_DEFAULT,
     DMA_DMACCR_REPEAT_OFF,
-    DMA_DMACCR_AUTOINIT_ON,
+    DMA_DMACCR_AUTOINIT_OFF,
     DMA_DMACCR_EN_STOP,
     DMA_DMACCR_PRIO_LOW,
     DMA_DMACCR_FS_DISABLE,
@@ -110,6 +203,9 @@ DMA_Config  dmaXmtConfig = {
 
 /* Define a DMA_Handle object to be used with DMA_open function */
 DMA_Handle hDmaRcv, hDmaXmt;
+
+/* Define a MCBSP_Handle object to be used with MCBSP_open function */
+MCBSP_Handle hMcbsp;
 
 volatile Uint16 transferComplete = FALSE;
 Uint16 err = 0;
@@ -152,9 +248,6 @@ void taskFxn(void)
     Uint16 srcAddrHi, srcAddrLo;
     Uint16 dstAddrHi, dstAddrLo;
     Uint16 i;
-
-    Uint16 reg_val;
-
  
     /* By default, the TMS320C55xx compiler assigns all data symbols word */
     /* addresses. The DMA however, expects all addresses to be byte       */
@@ -170,7 +263,7 @@ void taskFxn(void)
     dmaRcvConfig.dmacdsal = (DMA_AdrPtr)dstAddrLo;
     dmaRcvConfig.dmacdsau = dstAddrHi;
 
-    srcAddrHi = (Uint16)(((Uint32)(&xmt[0])) >> 15) & 0xFFFFu;
+	srcAddrHi = (Uint16)(((Uint32)(&xmt[0])) >> 15) & 0xFFFFu;
     srcAddrLo = (Uint16)(((Uint32)(&xmt[0])) << 1) & 0xFFFFu;
     dstAddrHi = (Uint16)(((Uint32)(MCBSP_ADDR(DXR11))) >> 15) & 0xFFFFu;
     dstAddrLo = (Uint16)(((Uint32)(MCBSP_ADDR(DXR11))) << 1) & 0xFFFFu;
@@ -180,19 +273,14 @@ void taskFxn(void)
     dmaXmtConfig.dmacdsal = (DMA_AdrPtr)dstAddrLo;
     dmaXmtConfig.dmacdsau = dstAddrHi;
 
-        /* Inicializa o barramento I2C */
-    EZDSP5502_I2C_init();
 
-    /* Chama nossa nova função para ligar o Codec */
-    AIC3204_codec_init();
-
-    printf("Codec AIC3204 Inicializado.\n");
+    /* Open MCBSP Port 1 and set registers to their power on defaults */
+    hMcbsp = MCBSP_open(MCBSP_PORT1, MCBSP_OPEN_RESET);
     
 
-    /* Open DMA channels 1 & 2 and set regs to power on defaults */
-    /* Usando os canais corretos (padrão) para o McBSP1 */
-    hDmaRcv = DMA_open(DMA_CHA1, DMA_OPEN_RESET); // Canal 1 para Receber
-    hDmaXmt = DMA_open(DMA_CHA2, DMA_OPEN_RESET); // Canal 2 para Enviar
+    /* Open DMA channels 4 & 5 and set regs to power on defaults */
+    hDmaRcv = DMA_open(DMA_CHA4,DMA_OPEN_RESET);
+    hDmaXmt = DMA_open(DMA_CHA5,DMA_OPEN_RESET);  
 
     /* Get interrupt event associated with DMA receive and transmit */
     xmtEventId = DMA_getEventId(hDmaXmt);
@@ -214,45 +302,63 @@ void taskFxn(void)
     IRQ_plug(xmtEventId,&dmaXmtIsr);
     IRQ_plug(rcvEventId,&dmaRcvIsr);
 
+    /* Write values from configuration structure to MCBSP control regs */
+    MCBSP_config(hMcbsp, &ConfigLoopBack16); 
     
     /* Write values from configuration structure to DMA control regs */
     DMA_config(hDmaRcv,&dmaRcvConfig);
     DMA_config(hDmaXmt,&dmaXmtConfig);
   
-
-    /* Ela liga a energia (clocks) e configura o McBSP */
-    EZDSP5502_MCBSP_init();
-
-    /* 1. Habilita todas as interrupções (CPU) */
+   /* Enable all maskable interrupts */
     IRQ_globalEnable();
 
-    
+    /* Start Sample Rate Generator and Enable Frame Sync */
+    MCBSP_start(hMcbsp,
+                MCBSP_SRGR_START | MCBSP_SRGR_FRAMESYNC,
+                0x300u);
+
+    /* Enable DMA */
     DMA_start(hDmaRcv);
     DMA_start(hDmaXmt);
+
+    /* Take MCBSP transmit and receive out of reset */
+    MCBSP_start(hMcbsp,
+                MCBSP_XMIT_START | MCBSP_RCV_START,
+                0u);
   
-    printf("Motor de áudio em tempo real iniciado!\n");
-
-    while (1)
-    {
-        if (g_audio_frame_pronto) // A flag será setada pela ISR
-        {
-            g_audio_frame_pronto = 0; // Abaixa a flag
-
-            /* ESTE É O SEU LOOPBACK DE ÁUDIO! */
-            for(i = 0; i < N; i++)
-            {
-                xmt[i] = rcv[i]; // Copia o que entrou para o buffer de saída
-            }
-        }
+   /* Wait for DMA transfer to be complete */
+    while (!transferComplete){
+        ;   
     }
+   
+    /*------------------------------------------*\
+     * Compare values 
+    \*------------------------------------------*/   
+    for(i = 0; i <= N - 1; i++){
+        if (rcv[i] != xmt[i]){
+            ++err;
+            break;
+       }
+    }
+
+    printf ("%s\n",err?"TEST FAILED" : "TEST PASSED");
+
+    /* Restore status of global interrupt enable flag */
+    IRQ_globalRestore(old_intm);
+        
+    /* We're done with MCBSP and DMA , so close them */
+    MCBSP_close(hMcbsp);
+    DMA_close(hDmaRcv);
+    DMA_close(hDmaXmt);                     
 }
 
 interrupt void dmaXmtIsr(void) {
-   // Não precisamos mais parar o DMA
-   // Apenas limpa a interrupção (se necessário, mas o AUTOINIT cuida)
+   DMA_stop(hDmaXmt);
+   IRQ_disable(xmtEventId);
 }
 
 interrupt void dmaRcvIsr(void) {
-   g_audio_frame_pronto = 1; // AVISA O MAIN() QUE O ÁUDIO CHEGOU!
-   // Não paramos mais o DMA. O AUTOINIT já o reiniciou.
+   DMA_stop(hDmaRcv);
+   IRQ_disable(rcvEventId);
+   transferComplete = TRUE;
 }
