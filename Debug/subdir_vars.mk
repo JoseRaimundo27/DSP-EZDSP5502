@@ -4,7 +4,7 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CMD_SRCS += \
-../dma4.cmd 
+../VC5502.cmd 
 
 S55_SRCS += \
 ../vectors_dma4.s55 

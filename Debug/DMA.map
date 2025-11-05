@@ -1,7 +1,7 @@
 ******************************************************************************
               TMS320C55x Linker Unix v4.4.1                    
 ******************************************************************************
->> Linked Tue Nov  4 22:24:07 2025
+>> Linked Tue Nov  4 22:33:07 2025
 
 OUTPUT FILE NAME:   <DMA.out>
 ENTRY POINT SYMBOL: "_c_int00"  address: 00006ae0
@@ -13,16 +13,13 @@ MEMORY CONFIGURATION
                         (bytes)   (bytes)    (bytes)   (bytes)
 ----------------------  --------  ---------  --------  --------  ----  --------
   MMR                   00000000   000000c0  00000000  000000c0  RWIX
-  DARAM0                000000c0   00001f3f  000012ae  00000c91  RWIX
-  DARAM1                00002000   00005fff  00004ed0  0000112f  RWIX
-  DARAM4                00008000   00001fff  000008c0  0000173f  RWIX
-  DARAM5                0000a000   00001fff  00000000  00001fff  RWIX
-  DARAM6                0000c000   00001fff  00000000  00001fff  RWIX
-  DARAM7                0000e000   00001fff  00000000  00001fff  RWIX
-  CE0                   00010000   003effff  00000000  003effff  RWIX
-  CE1                   00400000   003fffff  00000000  003fffff  RWIX
-  CE2                   00800000   003fffff  00000000  003fffff  RWIX
-  CE3                   00c00000   003f7fff  00000000  003f7fff  RWIX
+  DARAM0                000000c0   00001f3f  00000300  00001c3f  RWIX
+  DARAM                 00002000   0000dc00  0000ae3e  00002dc2  RWIX
+  VECS                  0000fe00   00000200  00000100  00000100  RWIX
+  CE0                   00010000   003f0000  00000000  003f0000  RWIX
+  CE1                   00400000   00400000  00000000  00400000  RWIX
+  CE2                   00800000   00400000  00000000  00400000  RWIX
+  CE3                   00c00000   003f8000  00000000  003f8000  RWIX
 
 
 SECTION ALLOCATION MAP
@@ -31,54 +28,13 @@ SECTION ALLOCATION MAP
 output                                                          attributes/
 section   page  orgn(bytes) orgn(words) len(bytes) len(words)   input sections
 --------  ----  ----------- ----------- ---------- ----------   --------------
-.cinit       0   [ 000000c0 ]  00000060          *   000001b5   
-                 [ 000000c0 ]  00000060          *   00000081   csl5502.lib : csl_dmadat.obj (.cinit)
-                 [ 000001c2 ]  000000e1          *   00000069               : csl_mcbspdat.obj (.cinit)
-                 [ 00000294 ]  0000014a          *   0000004a   main_dma4.obj (.cinit)
-                 [ 00000328 ]  00000194          *   00000028   rts55.lib : lowlev.obj (.cinit)
-                 [ 00000378 ]  000001bc          *   00000023   csl5502.lib : csl_csldat.obj (.cinit)
-                 [ 000003be ]  000001df          *   00000019   rts55.lib : defs.obj (.cinit)
-                 [ 000003f0 ]  000001f8          *   0000000a             : _lock.obj (.cinit)
-                 [ 00000404 ]  00000202          *   0000000a             : exit.obj (.cinit)
-                 [ 00000418 ]  0000020c          *   00000004             : fopen.obj (.cinit)
-                 [ 00000420 ]  00000210          *   00000004             : memory.obj (.cinit)
-                 [ 00000428 ]  00000214          *   00000001   --HOLE-- [fill = 0]
+.pinit       0   [ 00002000 ]  00001000          *   00000000   UNINITIALIZED
 
-.const       0   [ 0000042c ]  00000216          *   0000017e   
-                 [ 0000042c ]  00000216          *   00000101   rts55.lib : ctype.obj (.const:__ctypes_)
-                 [ 0000062e ]  00000317          *   00000023             : _printfi.obj (.const:.string)
-                 [ 00000674 ]  0000033a          *   0000001c   main_dma4.obj (.const:.string)
-                 [ 000006ac ]  00000356          *   0000001b   ezdsp5502_mcbsp.obj (.const:_$P$T0$1)
-                 [ 000006e2 ]  00000371          *   00000001   --HOLE-- [fill = 0]
-                 [ 000006e4 ]  00000372          *   0000000c   rts55.lib : _printfi.obj (.const)
-                 [ 000006fc ]  0000037e          *   0000000a   ezdsp5502_i2c.obj (.const:_$P$T0$1)
-                 [ 00000710 ]  00000388          *   00000008   rts55.lib : divd.obj (.const:_initial_approx$1)
-                 [ 00000720 ]  00000390          *   00000002             : fputs.obj (.const:.string)
-                 [ 00000724 ]  00000392          *   00000002             : fltlid.obj (.const)
+dmaMem       0   [ 00000100 ]  00000080          *   00000100   UNINITIALIZED
+                 [ 00000100 ]  00000080          *   00000100   main_dma4.obj (dmaMem)
 
-.cio         0   [ 00000728 ]  00000394          *   00000120   UNINITIALIZED
-                 [ 00000728 ]  00000394          *   00000120   rts55.lib : trgmsg.obj (.cio)
-
-.csldata     0   [ 00000968 ]  000004b4          *   00000104   UNINITIALIZED
-                 [ 00000968 ]  000004b4          *   0000007e   csl5502.lib : csl_dmadat.obj (.csldata:DMA_data)
-                 [ 00000a64 ]  00000532          *   00000066               : csl_mcbspdat.obj (.csldata:MCBSP_data)
-                 [ 00000b30 ]  00000598          *   00000020               : csl_csldat.obj (.csldata:SYS_data)
-
-.stack       0   [ 00000b70 ]  000005b8          *   00000100   UNINITIALIZED
-                 [ 00000b70 ]  000005b8          *   00000100   --HOLE--
-
-.sysstack 
-*            0   [ 00000d70 ]  000006b8          *   00000100   UNINITIALIZED
-                 [ 00000d70 ]  000006b8          *   00000100   --HOLE--
-
-dmaMem       0   [ 00000f70 ]  000007b8          *   00000100   UNINITIALIZED
-                 [ 00000f70 ]  000007b8          *   00000100   main_dma4.obj (dmaMem)
-
-.vectors     0     00001170  [ 000008b8 ] 00000100          *   
-                   00001170  [ 000008b8 ] 00000100          *   vectors_dma4.obj (.vectors)
-
-vectors      0     00001270  [ 00000938 ] 00000100          *   
-                   00001270  [ 00000938 ] 00000100          *   rts55.lib : vectors.obj (vectors)
+.vectors     0     00000300  [ 00000180 ] 00000100          *   
+                   00000300  [ 00000180 ] 00000100          *   vectors_dma4.obj (.vectors)
 
 .text        0     00002000  [ 00001000 ] 00004ed0          *   
                    00002000  [ 00001000 ] 00001330          *   rts55.lib : _printfi.obj (.text)
@@ -179,22 +135,65 @@ vectors      0     00001270  [ 00000938 ] 00000100          *
                    00006ecc  [ 00003766 ] 00000002          *               : csl.obj (.text)
                    00006ece  [ 00003767 ] 00000002          *   --HOLE-- [fill = 20]
 
-.data        0   [ 00008000 ]  00004000          *   00000000   UNINITIALIZED
+.data        0   [ 00002000 ]  00001000          *   00000000   UNINITIALIZED
 
-.bss         0   [ 00008000 ]  00004000          *   00000260   UNINITIALIZED
-                 [ 00008000 ]  00004000          *   000000dd   rts55.lib : defs.obj (.bss)
-                 [ 000081ba ]  000040dd          *   000000d0             : trgdrv.obj (.bss)
-                 [ 0000835a ]  000041ad          *   00000001   ezdsp5502_mcbsp.obj (.bss)
-                 [ 0000835c ]  000041ae          *   0000005d   rts55.lib : lowlev.obj (.bss)
-                 [ 00008416 ]  0000420b          *   00000001             : fopen.obj (.bss)
-                 [ 00008418 ]  0000420c          *   00000047   main_dma4.obj (.bss)
-                 [ 000084a6 ]  00004253          *   00000001   --HOLE--
-                 [ 000084a8 ]  00004254          *   00000004   rts55.lib : _lock.obj (.bss)
-                 [ 000084b0 ]  00004258          *   00000004             : exit.obj (.bss)
-                 [ 000084b8 ]  0000425c          *   00000004             : memory.obj (.bss)
+.stack       0   [ 00006ee0 ]  00003770          *   00001000   UNINITIALIZED
+                 [ 00006ee0 ]  00003770          *   00001000   --HOLE--
 
-.sysmem      0   [ 000084c0 ]  00004260          *   00000200   UNINITIALIZED
-                 [ 000084c0 ]  00004260          *   00000200   --HOLE--
+.sysmem      0   [ 00008ee0 ]  00004770          *   00001000   UNINITIALIZED
+                 [ 00008ee0 ]  00004770          *   00001000   --HOLE--
+
+.sysstack 
+*            0   [ 0000aee0 ]  00005770          *   00000800   UNINITIALIZED
+                 [ 0000aee0 ]  00005770          *   00000800   --HOLE--
+
+.bss         0   [ 0000bee0 ]  00005f70          *   00000260   UNINITIALIZED
+                 [ 0000bee0 ]  00005f70          *   000000dd   rts55.lib : defs.obj (.bss)
+                 [ 0000c09a ]  0000604d          *   000000d0             : trgdrv.obj (.bss)
+                 [ 0000c23a ]  0000611d          *   00000001   ezdsp5502_mcbsp.obj (.bss)
+                 [ 0000c23c ]  0000611e          *   0000005d   rts55.lib : lowlev.obj (.bss)
+                 [ 0000c2f6 ]  0000617b          *   00000001             : fopen.obj (.bss)
+                 [ 0000c2f8 ]  0000617c          *   00000047   main_dma4.obj (.bss)
+                 [ 0000c386 ]  000061c3          *   00000001   --HOLE--
+                 [ 0000c388 ]  000061c4          *   00000004   rts55.lib : _lock.obj (.bss)
+                 [ 0000c390 ]  000061c8          *   00000004             : exit.obj (.bss)
+                 [ 0000c398 ]  000061cc          *   00000004             : memory.obj (.bss)
+
+.cinit       0   [ 0000c3a0 ]  000061d0          *   000001b5   
+                 [ 0000c3a0 ]  000061d0          *   00000081   csl5502.lib : csl_dmadat.obj (.cinit)
+                 [ 0000c4a2 ]  00006251          *   00000069               : csl_mcbspdat.obj (.cinit)
+                 [ 0000c574 ]  000062ba          *   0000004a   main_dma4.obj (.cinit)
+                 [ 0000c608 ]  00006304          *   00000028   rts55.lib : lowlev.obj (.cinit)
+                 [ 0000c658 ]  0000632c          *   00000023   csl5502.lib : csl_csldat.obj (.cinit)
+                 [ 0000c69e ]  0000634f          *   00000019   rts55.lib : defs.obj (.cinit)
+                 [ 0000c6d0 ]  00006368          *   0000000a             : _lock.obj (.cinit)
+                 [ 0000c6e4 ]  00006372          *   0000000a             : exit.obj (.cinit)
+                 [ 0000c6f8 ]  0000637c          *   00000004             : fopen.obj (.cinit)
+                 [ 0000c700 ]  00006380          *   00000004             : memory.obj (.cinit)
+                 [ 0000c708 ]  00006384          *   00000001   --HOLE-- [fill = 0]
+
+.const       0   [ 0000c720 ]  00006390          *   0000017e   
+                 [ 0000c720 ]  00006390          *   00000101   rts55.lib : ctype.obj (.const:__ctypes_)
+                 [ 0000c922 ]  00006491          *   00000023             : _printfi.obj (.const:.string)
+                 [ 0000c968 ]  000064b4          *   0000001c   main_dma4.obj (.const:.string)
+                 [ 0000c9a0 ]  000064d0          *   0000001b   ezdsp5502_mcbsp.obj (.const:_$P$T0$1)
+                 [ 0000c9d6 ]  000064eb          *   00000001   --HOLE-- [fill = 0]
+                 [ 0000c9d8 ]  000064ec          *   0000000c   rts55.lib : _printfi.obj (.const)
+                 [ 0000c9f0 ]  000064f8          *   0000000a   ezdsp5502_i2c.obj (.const:_$P$T0$1)
+                 [ 0000ca04 ]  00006502          *   00000008   rts55.lib : divd.obj (.const:_initial_approx$1)
+                 [ 0000ca14 ]  0000650a          *   00000002             : fputs.obj (.const:.string)
+                 [ 0000ca18 ]  0000650c          *   00000002             : fltlid.obj (.const)
+
+.cio         0   [ 0000ca20 ]  00006510          *   00000120   UNINITIALIZED
+                 [ 0000ca20 ]  00006510          *   00000120   rts55.lib : trgmsg.obj (.cio)
+
+.csldata     0   [ 0000cc60 ]  00006630          *   00000104   UNINITIALIZED
+                 [ 0000cc60 ]  00006630          *   0000007e   csl5502.lib : csl_dmadat.obj (.csldata:DMA_data)
+                 [ 0000cd5c ]  000066ae          *   00000066               : csl_mcbspdat.obj (.csldata:MCBSP_data)
+                 [ 0000ce28 ]  00006714          *   00000020               : csl_csldat.obj (.csldata:SYS_data)
+
+vectors      0     0000fe00  [ 00007f00 ] 00000100          *   
+                   0000fe00  [ 00007f00 ] 00000100          *   rts55.lib : vectors.obj (vectors)
 
 
 GLOBAL SYMBOLS: SORTED ALPHABETICALLY BY Name 
@@ -205,8 +204,8 @@ byte addr   word addr   name
 00000002                $TI_capability$C5500$CallingConvention
 00000001                $TI_capability$C5500$MemoryModel
 00000001                $TI_capability_requires_rev2
-            00004000    .bss
-            00004000    .data
+            00005f70    .bss
+            00001000    .data
 00002000                .text
 00006eb6                C$$EXIT
 000060e4                C$$IO$$
@@ -214,11 +213,11 @@ byte addr   word addr   name
 00006dbd                I$$UDIV
 00006dd2                I$$UMOD
 00006ecc                _CSL5502_LIB_
-            000004b4    _CSL_DmaData
-            00000532    _CSL_McbspData
-            00000598    _CSL_SysData
+            00006630    _CSL_DmaData
+            000066ae    _CSL_McbspData
+            00006714    _CSL_SysData
 00006e88                _CSL_init
-            0000420c    _ConfigLoopBack16
+            0000617c    _ConfigLoopBack16
 00006d00                _DMA_close
 00005c78                _DMA_config
 00006234                _DMA_open
@@ -266,22 +265,22 @@ byte addr   word addr   name
 00005124                _MCBSP_reset
 000063e0                _MCBSP_start
 00006ec4                _MCBSP_write16
-00001270                _Reset
-00001170                _VECSTART
-            00000394    __CIOBUF_
+0000fe00                _Reset
+00000300                _VECSTART
+            00006510    __CIOBUF_
 00006ea0                __CSL_init
-            000006b8    __STACK_END
-00000200                __STACK_SIZE
-00000400                __SYSMEM_SIZE
-00000200                __SYSSTACK_SIZE
+            00004770    __STACK_END
+00002000                __STACK_SIZE
+00002000                __SYSMEM_SIZE
+00001000                __SYSSTACK_SIZE
 00000001                __TI_args_main
 ffffffff                ___binit__
-            00004000    ___bss__
+            00005f70    ___bss__
 ffffffff                ___c_args__
-            00000060    ___cinit__
-            00004000    ___data__
-            00004000    ___edata__
-            00004260    ___end__
+            000061d0    ___cinit__
+            00001000    ___data__
+            00001000    ___edata__
+            000061d0    ___end__
 00006ed0                ___etext__
 00006e06                ___isinf
 ffffffff                ___pinit__
@@ -289,9 +288,9 @@ ffffffff                ___pinit__
 00004859                __addd
 00006c0a                __args_main
 00004e26                __cleanup
-            00004258    __cleanup_ptr
+            000061c8    __cleanup_ptr
 000050cb                __cmpd
-            00000216    __ctypes_
+            00006390    __ctypes_
 00003c01                __divd
 00006bc2                __divli
 00004ce2                __divlli
@@ -299,19 +298,19 @@ ffffffff                ___pinit__
 00006191                __divul
 00004bee                __divull
 00005f97                __doflush
-            0000425a    __dtors_ptr
+            000061ca    __dtors_ptr
 00005097                __eqld
 00006d93                __fixdi
 0000670e                __fixdli
 0000684f                __fltlid
 00006462                __frcmpyd
 000064d8                __frcmpyd_div
-            000040dc    __ft_end
-            00004000    __ftable
+            0000604c    __ft_end
+            00005f70    __ftable
 0000504d                __geqd
 00005002                __gtrd
 00004fb5                __leqd
-            00004254    __lock
+            000061c4    __lock
 00004f6d                __lssd
 0000577a                __mpyd
 00006e34                __mpyli
@@ -328,27 +327,27 @@ ffffffff                ___pinit__
 00006dd2                __remu
 000065be                __remul
 00004ab9                __remull
-            000005b8    __stack
+            00003770    __stack
 00006e20                __subd
-            00004260    __sys_memory
-            000006b8    __sysstack
-            0000403c    __tmpnams
-            00004256    __unlock
+            00004770    __sys_memory
+            00005770    __sysstack
+            00005fac    __tmpnams
+            000061c6    __unlock
 00005d81                __wrt_ok
 00006eb5                _abort
 000036c6                _add_device
-            000041ad    _aicMcbsp
+            0000611d    _aicMcbsp
 000069d1                _atoi
 0000677d                _auto_init
 00006ae0                _c_int00
 00004327                _calloc
 00004323                _chkheap
 00003669                _close
-            00004228    _dmaRcvConfig
+            00006198    _dmaRcvConfig
 0000448f                _dmaRcvIsr
-            0000423a    _dmaXmtConfig
+            000061aa    _dmaXmtConfig
 00004349                _dmaXmtIsr
-            0000424f    _err
+            000061bf    _err
 00006cc5                _exit
 000068b1                _fclose
 00005ff0                _fflush
@@ -361,9 +360,9 @@ ffffffff                ___pinit__
 00004e74                _freopen
 00006a88                _fseek
 0000379c                _getenv
-            00004227    _hDmaRcv
-            0000424c    _hDmaXmt
-            0000424d    _hMcbsp
+            00006197    _hDmaRcv
+            000061bc    _hDmaXmt
+            000061bd    _hMcbsp
 00003609                _lseek
 0000654b                _ltoa
 0000464d                _main
@@ -372,14 +371,14 @@ ffffffff                ___pinit__
 00006de7                _memccpy
 00006c4a                _memcpy
 00004058                _minit
-            00004250    _old_intm
+            000061c0    _old_intm
 00003575                _open
 00006b2c                _printf
 00006358                _putc
 000063d0                _putchar
 00005c53                _puts
-            00000838    _rcv
-            00004252    _rcvEventId
+            00000100    _rcv
+            000061c2    _rcvEventId
 000034e4                _read
 00006912                _readmsg
 00004150                _realloc
@@ -388,48 +387,48 @@ ffffffff                ___pinit__
 0000346d                _rename
 00005eea                _setvbuf
 00004694                _taskFxn
-            0000424e    _transferComplete
+            000061be    _transferComplete
 0000343f                _unlink
 00003330                _write
 00006041                _writemsg
-            000007b8    _xmt
-            00004251    _xmtEventId
+            00000080    _xmt
+            000061c1    _xmtEventId
 ffffffff                binit
-            00000060    cinit
-            00004000    edata
-            00004260    end
+            000061d0    cinit
+            00001000    edata
+            000061d0    end
 00006ed0                etext
-00001180                int0
-00001188                int1
-000011d0                int10
-000011d8                int11
-000011e0                int12
-000011e8                int13
-000011f0                int14
-000011f8                int15
-00001200                int16
-00001208                int17
-00001210                int18
-00001218                int19
-00001190                int2
-00001220                int20
-00001228                int21
-00001230                int22
-00001238                int23
-00001240                int24
-00001248                int25
-00001250                int26
-00001258                int27
-00001260                int28
-00001268                int29
-00001198                int3
-000011a0                int4
-000011a8                int5
-000011b0                int6
-000011b8                int7
-000011c0                int8
-000011c8                int9
-00001178                nmi
+00000310                int0
+00000318                int1
+00000360                int10
+00000368                int11
+00000370                int12
+00000378                int13
+00000380                int14
+00000388                int15
+00000390                int16
+00000398                int17
+000003a0                int18
+000003a8                int19
+00000320                int2
+000003b0                int20
+000003b8                int21
+000003c0                int22
+000003c8                int23
+000003d0                int24
+000003d8                int25
+000003e0                int26
+000003e8                int27
+000003f0                int28
+000003f8                int29
+00000328                int3
+00000330                int4
+00000338                int5
+00000340                int6
+00000348                int7
+00000350                int8
+00000358                int9
+00000308                nmi
 00005c75                no_isr
 ffffffff                pinit
 
@@ -443,56 +442,49 @@ byte addr   word addr   name
 00000001                $TI_capability_requires_rev2
 00000001                __TI_args_main
 00000002                $TI_capability$C5500$CallingConvention
-            00000060    ___cinit__
-            00000060    cinit
-00000200                __STACK_SIZE
-00000200                __SYSSTACK_SIZE
-00000400                __SYSMEM_SIZE
-            00000216    __ctypes_
-            00000394    __CIOBUF_
-            000004b4    _CSL_DmaData
-            00000532    _CSL_McbspData
-            00000598    _CSL_SysData
-            000005b8    __stack
-            000006b8    __STACK_END
-            000006b8    __sysstack
-            000007b8    _xmt
-            00000838    _rcv
-00001170                _VECSTART
-00001178                nmi
-00001180                int0
-00001188                int1
-00001190                int2
-00001198                int3
-000011a0                int4
-000011a8                int5
-000011b0                int6
-000011b8                int7
-000011c0                int8
-000011c8                int9
-000011d0                int10
-000011d8                int11
-000011e0                int12
-000011e8                int13
-000011f0                int14
-000011f8                int15
-00001200                int16
-00001208                int17
-00001210                int18
-00001218                int19
-00001220                int20
-00001228                int21
-00001230                int22
-00001238                int23
-00001240                int24
-00001248                int25
-00001250                int26
-00001258                int27
-00001260                int28
-00001268                int29
-00001270                _Reset
+            00000080    _xmt
+            00000100    _rcv
+00000300                _VECSTART
+00000308                nmi
+00000310                int0
+00000318                int1
+00000320                int2
+00000328                int3
+00000330                int4
+00000338                int5
+00000340                int6
+00000348                int7
+00000350                int8
+00000358                int9
+00000360                int10
+00000368                int11
+00000370                int12
+00000378                int13
+00000380                int14
+00000388                int15
+00000390                int16
+00000398                int17
+000003a0                int18
+000003a8                int19
+000003b0                int20
+000003b8                int21
+000003c0                int22
+000003c8                int23
+000003d0                int24
+000003d8                int25
+000003e0                int26
+000003e8                int27
+000003f0                int28
+000003f8                int29
+00001000                __SYSSTACK_SIZE
+            00001000    .data
 00002000                .text
+00002000                __STACK_SIZE
+00002000                __SYSMEM_SIZE
+            00001000    ___data__
+            00001000    ___edata__
 00002000                ___text__
+            00001000    edata
 0000315c                __printfi
 00003330                _write
 0000343f                _unlink
@@ -636,34 +628,41 @@ byte addr   word addr   name
 00006ecc                _CSL5502_LIB_
 00006ed0                ___etext__
 00006ed0                etext
-            00004000    .bss
-            00004000    .data
-            00004000    ___bss__
-            00004000    ___data__
-            00004000    ___edata__
-            00004000    __ftable
-            00004000    edata
-            0000403c    __tmpnams
-            000040dc    __ft_end
-            000041ad    _aicMcbsp
-            0000420c    _ConfigLoopBack16
-            00004227    _hDmaRcv
-            00004228    _dmaRcvConfig
-            0000423a    _dmaXmtConfig
-            0000424c    _hDmaXmt
-            0000424d    _hMcbsp
-            0000424e    _transferComplete
-            0000424f    _err
-            00004250    _old_intm
-            00004251    _xmtEventId
-            00004252    _rcvEventId
-            00004254    __lock
-            00004256    __unlock
-            00004258    __cleanup_ptr
-            0000425a    __dtors_ptr
-            00004260    ___end__
-            00004260    __sys_memory
-            00004260    end
+            00003770    __stack
+            00004770    __STACK_END
+            00004770    __sys_memory
+            00005770    __sysstack
+            00005f70    .bss
+            00005f70    ___bss__
+            00005f70    __ftable
+            00005fac    __tmpnams
+            0000604c    __ft_end
+            0000611d    _aicMcbsp
+            0000617c    _ConfigLoopBack16
+            00006197    _hDmaRcv
+            00006198    _dmaRcvConfig
+            000061aa    _dmaXmtConfig
+            000061bc    _hDmaXmt
+            000061bd    _hMcbsp
+            000061be    _transferComplete
+            000061bf    _err
+            000061c0    _old_intm
+            000061c1    _xmtEventId
+            000061c2    _rcvEventId
+            000061c4    __lock
+            000061c6    __unlock
+            000061c8    __cleanup_ptr
+            000061ca    __dtors_ptr
+            000061d0    ___cinit__
+            000061d0    ___end__
+            000061d0    cinit
+            000061d0    end
+            00006390    __ctypes_
+            00006510    __CIOBUF_
+            00006630    _CSL_DmaData
+            000066ae    _CSL_McbspData
+            00006714    _CSL_SysData
+0000fe00                _Reset
 ffffffff                ___binit__
 ffffffff                ___c_args__
 ffffffff                ___pinit__

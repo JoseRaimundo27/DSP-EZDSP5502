@@ -14,7 +14,7 @@ ORDERED_OBJS += \
 "./lib/ezdsp5502_i2c.obj" \
 "./lib/ezdsp5502_i2cgpio.obj" \
 "./lib/ezdsp5502_mcbsp.obj" \
-"../dma4.cmd" \
+"../VC5502.cmd" \
 $(GEN_CMDS__FLAG) \
 -llibc.a \
 -l"/home/caco/Área de trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/lib/csl5502.lib" \
