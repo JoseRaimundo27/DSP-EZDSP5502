@@ -1,6 +1,7 @@
 "./aic3204.obj"
 "./dma.obj"
 "./main.obj"
+"./vectors_dma4.obj"
 "./include/ezdsp5502.obj"
 "./include/ezdsp5502_i2c.obj"
 "./include/ezdsp5502_i2cgpio.obj"

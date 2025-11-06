@@ -6,10 +6,16 @@
 CMD_SRCS += \
 ../lnkx.cmd 
 
+S55_SRCS += \
+../vectors_dma4.s55 
+
 C_SRCS += \
 ../aic3204.c \
 ../dma.c \
 ../main.c 
+
+S55_DEPS += \
+./vectors_dma4.d 
 
 C_DEPS += \
 ./aic3204.d \
@@ -19,12 +25,17 @@ C_DEPS += \
 OBJS += \
 ./aic3204.obj \
 ./dma.obj \
-./main.obj 
+./main.obj \
+./vectors_dma4.obj 
 
 OBJS__QUOTED += \
 "aic3204.obj" \
 "dma.obj" \
-"main.obj" 
+"main.obj" \
+"vectors_dma4.obj" 
+
+S55_DEPS__QUOTED += \
+"vectors_dma4.d" 
 
 C_DEPS__QUOTED += \
 "aic3204.d" \
@@ -35,5 +46,8 @@ C_SRCS__QUOTED += \
 "../aic3204.c" \
 "../dma.c" \
 "../main.c" 
+
+S55_SRCS__QUOTED += \
+"../vectors_dma4.s55" 
 
 

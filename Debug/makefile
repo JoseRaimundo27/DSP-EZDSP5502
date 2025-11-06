@@ -11,6 +11,7 @@ ORDERED_OBJS += \
 "./aic3204.obj" \
 "./dma.obj" \
 "./main.obj" \
+"./vectors_dma4.obj" \
 "./include/ezdsp5502.obj" \
 "./include/ezdsp5502_i2c.obj" \
 "./include/ezdsp5502_i2cgpio.obj" \
@@ -148,7 +149,8 @@ demoboot.out: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
 # Other Targets
 clean:
 	-$(RM) $(EXE_OUTPUTS__QUOTED)
-	-$(RM) "aic3204.obj" "dma.obj" "main.obj" "include/ezdsp5502.obj" "include/ezdsp5502_i2c.obj" "include/ezdsp5502_i2cgpio.obj" "include/ezdsp5502_mcbsp.obj" 
+	-$(RM) "aic3204.obj" "dma.obj" "main.obj" "vectors_dma4.obj" "include/ezdsp5502.obj" "include/ezdsp5502_i2c.obj" "include/ezdsp5502_i2cgpio.obj" "include/ezdsp5502_mcbsp.obj" 
+	-$(RM) "vectors_dma4.d" 
 	-$(RM) "aic3204.d" "dma.d" "main.d" "include/ezdsp5502.d" "include/ezdsp5502_i2c.d" "include/ezdsp5502_i2cgpio.d" "include/ezdsp5502_mcbsp.d" 
 	-@echo 'Finished clean'
 	-@echo ' '
