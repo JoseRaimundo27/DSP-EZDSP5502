@@ -1,0 +1,10 @@
+"./aic3204.obj"
+"./dma.obj"
+"./main.obj"
+"./include/ezdsp5502.obj"
+"./include/ezdsp5502_i2c.obj"
+"./include/ezdsp5502_i2cgpio.obj"
+"./include/ezdsp5502_mcbsp.obj"
+"../lnkx.cmd"
+-llibc.a
+-l"/home/caco/Área de trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/lib/csl5502.lib"
