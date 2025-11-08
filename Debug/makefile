@@ -128,21 +128,21 @@ endif
 
 # Add inputs and outputs from these tool invocations to the build variables 
 EXE_OUTPUTS += \
-demoboot.out 
+aic3204_dma_loopback.out 
 
 EXE_OUTPUTS__QUOTED += \
-"demoboot.out" 
+"aic3204_dma_loopback.out" 
 
 
 # All Target
 all: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
-	@$(MAKE) --no-print-directory -Onone "demoboot.out"
+	@$(MAKE) --no-print-directory -Onone "aic3204_dma_loopback.out"
 
 # Tool invocations
-demoboot.out: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
+aic3204_dma_loopback.out: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
 	@echo 'Building target: "$@"'
 	@echo 'Invoking: C5500 Linker'
-	"/home/caco/ti/ccs1281/ccs/tools/compiler/c5500_4.4.1/bin/cl55" -v5502 --memory_model=small -g --define=c5502 --display_error_number --diag_warning=225 --sat_reassoc=on --ptrdiff_size=16 -z -m"demoboot.map" --stack_size=0x200 --heap_size=0x400 -i"/home/caco/ti/ccs1281/ccs/tools/compiler/c5500_4.4.1/lib" -i"/home/caco/ti/ccs1281/ccs/tools/compiler/c5500_4.4.1/include" --reread_libs --display_error_number --warn_sections --xml_link_info="demoboot_linkInfo.xml" --rom_model --sys_stacksize=0x200 -o "demoboot.out" $(ORDERED_OBJS)
+	"/home/caco/ti/ccs1281/ccs/tools/compiler/c5500_4.4.1/bin/cl55" -v5502 --memory_model=small -g --define=c5502 --display_error_number --diag_warning=225 --sat_reassoc=on --ptrdiff_size=16 -z -m"aic3204_dma_loopback.map" --stack_size=0x200 --heap_size=0x400 -i"/home/caco/ti/ccs1281/ccs/tools/compiler/c5500_4.4.1/lib" -i"/home/caco/ti/ccs1281/ccs/tools/compiler/c5500_4.4.1/include" --reread_libs --display_error_number --warn_sections --xml_link_info="aic3204_dma_loopback_linkInfo.xml" --rom_model --sys_stacksize=0x200 -o "aic3204_dma_loopback.out" $(ORDERED_OBJS)
 	@echo 'Finished building target: "$@"'
 	@echo ' '
 

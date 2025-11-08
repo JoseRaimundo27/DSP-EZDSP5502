@@ -12,14 +12,14 @@
 Uint8 dmaState = 0; // (Não mais usado, mas mantido por segurança)
 
 
-#define AUDIO_BUFFER_SIZE 96 // Manter o mesmo tamanho do demo
+#define AUDIO_BUFFER_SIZE 140 // Manter o mesmo tamanho do demo
 
 #pragma DATA_SECTION(g_rxBuffer, "dmaMem")
-#pragma DATA_ALIGN(g_rxBuffer, 4)
+#pragma DATA_ALIGN(g_rxBuffer, 16)
 Uint16 g_rxBuffer[AUDIO_BUFFER_SIZE]; // Onde o "Line In" escreve (BUFFER DE ENTRADA)
 
 #pragma DATA_SECTION(g_txBuffer, "dmaMem")
-#pragma DATA_ALIGN(g_txBuffer, 4)
+#pragma DATA_ALIGN(g_txBuffer, 16)
 Uint16 g_txBuffer[AUDIO_BUFFER_SIZE]; // De onde o "Headphone" lê (BUFFER DE SAÍDA)
 // =========================================================================
 
@@ -41,8 +41,8 @@ DMA_Config dmaTxConfig = { // (Renomeado de 'myconfig' para 'dmaTxConfig')
         DMA_DMACCR_SRCAMODE_POSTINC, // Source address mode
         DMA_DMACCR_ENDPROG_OFF,      // End of programmation bit
         DMA_DMACCR_WP_DEFAULT,
-        DMA_DMACCR_REPEAT_ALWAYS,    // (Lição: Loop Infinito)
-        DMA_DMACCR_AUTOINIT_ON,      // (Lição: Loop Infinito)
+        DMA_DMACCR_REPEAT_ALWAYS,    // ( Loop Infinito)
+        DMA_DMACCR_AUTOINIT_ON,      // ( Loop Infinito)
         DMA_DMACCR_EN_STOP,          // Channel enable
         DMA_DMACCR_PRIO_HI,          // Channel priority
         DMA_DMACCR_FS_ELEMENT,       // Frame\Element Sync
@@ -208,17 +208,19 @@ void changeTone (void)
 interrupt void dmaRxIsr(void)
 {
     int i;
-    
+
     /* O "Cérebro" (Processamento) */
     // Por agora, vamos apenas fazer um loopback (bypass)
     // O áudio que acabou de chegar (g_rxBuffer)
     // é copiado para o áudio que vai sair (g_txBuffer)
-    
+
     for (i = 0; i < AUDIO_BUFFER_SIZE; i++)
     {
         // (No futuro, o seu Reverb/Phaser irá aqui)
         g_txBuffer[i] = g_rxBuffer[i];
     }
+
+
 }
 
 /* Transmissão. Não a usamos, mas tem de existir. */
