@@ -1,46 +1,48 @@
 #include"ezdsp5502.h"
 #include"ezdsp5502_mcbsp.h"
 #include "csl_dma.h"
-#include "csl_irq.h" // <-- ADICIONADO: Necessário para as Interrupções
-#include <math.h>         // (Necessário para a tabela Twiddle)
-#include "icomplex.h"     // (Necessário para a FFT intrínseca)
+#include "csl_irq.h"
+#include <math.h>
+#include "icomplex.h"
 
-#define N_FFT   128     // (É o nosso AUDIO_BUFFER_SIZE)
-#define EXP_FFT 7       // (Porque 2^7 = 128)
-
-/* Definições da FFT */
-#define FFT_FLAG        0
-#define IFFT_FLAG       1
-#define SCALE_FLAG      0
-#define NOSCALE_FLAG    1
-#define PI 3.1415926
-
-Uint8 dmaState = 0; // (Não mais usado, mas mantido por segurança)
-
-
-#define AUDIO_BUFFER_SIZE 96 // Manter o mesmo tamanho do demo
+#define AUDIO_BUFFER_SIZE 4096 // BUFFER MAIOR
 
 #pragma DATA_SECTION(g_rxBuffer, "dmaMem")
-#pragma DATA_ALIGN(g_rxBuffer, 4)
+#pragma DATA_ALIGN(g_rxBuffer, 4096)
 Uint16 g_rxBuffer[AUDIO_BUFFER_SIZE]; // Onde o "Line In" escreve (BUFFER DE ENTRADA)
 
 #pragma DATA_SECTION(g_txBuffer, "dmaMem")
-#pragma DATA_ALIGN(g_txBuffer, 4)
+#pragma DATA_ALIGN(g_txBuffer, 4096)
 Uint16 g_txBuffer[AUDIO_BUFFER_SIZE]; // De onde o "Headphone" lê (BUFFER DE SAÍDA)
 
-/* Buffers Globais para a FFT */
 
-#pragma DATA_SECTION(g_fftBuffer, "fftMem")
-#pragma DATA_ALIGN(g_fftBuffer, 4)
-complex g_fftBuffer[N_FFT];     // O buffer de trabalho "X" da FFT
+//--------------- PARAMETROS PARA O FLANGER ----------------------------
+// (A nossa taxa de amostragem de hardware)
+#define FS 48000
+#define PI 3.14159265359
 
-#pragma DATA_SECTION(g_twiddleTable, "fftMem")
-#pragma DATA_ALIGN(g_twiddleTable, 4)
-complex g_twiddleTable[EXP_FFT]; // A nossa tabela "W" (Twiddle)
-// =========================================================================
+// (Parâmetros adaptados do Exp10.6 para 48kHz)
+#define FLANGER_L0    600     // Atraso Médio (100 * 6) (AGORA INT)
+#define FLANGER_A     300     // Variação (L0 * 0.5 = 300) (AGORA INT)
+#define FLANGER_g     16384   // Profundidade (1.0 em Q15 = 16384)
+#define FLANGER_fr    1     // Velocidade do LFO (1 Hz)
 
-extern void bit_rev(complex *, Uint16);
-extern void fft(complex *, Uint16, complex *, Uint16, Uint16);
+// O "Buffer de Atraso" (Delay Line) do Flanger
+// Tem de ser MAIOR que L0 + A = 600 + 300 = 900
+// Vamos usar um buffer seguro de 1024 (potência de 2)
+#define FLANGER_DELAY_SIZE 1024
+#define FLANGER_DELAY_MASK (FLANGER_DELAY_SIZE - 1) // (Para loop rápido)
+
+#pragma DATA_SECTION(g_flangerBuffer, "flangerMem")
+#pragma DATA_ALIGN(g_flangerBuffer, 4)
+Int16 g_flangerBuffer[FLANGER_DELAY_SIZE]; // O nosso buffer circular
+volatile Uint16 g_flangerWriteIndex = 0;  // Onde escrevemos no buffer
+
+// O "LFO" de Ponto Fixo (Tabela de Seno de 256 amostras)
+#define LFO_SIZE 256
+Int16 g_lfoTable[LFO_SIZE];
+volatile Uint16 g_lfoIndex = 0; // O "ponteiro" do LFO
+float g_lfoPhaseInc = (LFO_SIZE * FLANGER_fr) / (float)FS; // (Calculado 1 vez)
 
 //(ISRs):
 extern void VECSTART(void);
@@ -48,8 +50,6 @@ interrupt void dmaRxIsr(void);
 interrupt void dmaTxIsr(void);
 
 
-
-/* DMA configuration structure ( Tx - Transmissão) */
 DMA_Config dmaTxConfig = { // (Renomeado de 'myconfig' para 'dmaTxConfig')
     DMA_DMACSDP_RMK(
         DMA_DMACSDP_DSTBEN_NOBURST , // Destination burst
@@ -106,42 +106,42 @@ DMA_Config dmaRxConfig = {
     DMA_DMACSDP_RMK(
         DMA_DMACSDP_DSTBEN_NOBURST,
         DMA_DMACSDP_DSTPACK_OFF,
-        DMA_DMACSDP_DST_DARAMPORT1, /* Destino: a nossa RAM (g_rxBuffer) */
+        DMA_DMACSDP_DST_DARAMPORT1,
         DMA_DMACSDP_SRCBEN_NOBURST,
         DMA_DMACSDP_SRCPACK_OFF,
-        DMA_DMACSDP_SRC_PERIPH,     /* Origem: o Periférico (McBSP "Line In") */
+        DMA_DMACSDP_SRC_PERIPH,
         DMA_DMACSDP_DATATYPE_16BIT
     ), /* DMACSDP */
 
     DMA_DMACCR_RMK(
-        DMA_DMACCR_DSTAMODE_POSTINC, /* Incrementar o destino (preencher o buffer) */
-        DMA_DMACCR_SRCAMODE_CONST,   /* Ler sempre da mesma "porta" (McBSP) */
+        DMA_DMACCR_DSTAMODE_POSTINC,
+        DMA_DMACCR_SRCAMODE_CONST,
         DMA_DMACCR_ENDPROG_OFF,
         DMA_DMACCR_WP_DEFAULT,
         DMA_DMACCR_REPEAT_ALWAYS,    /* Lição: Loop Infinito */
         DMA_DMACCR_AUTOINIT_ON,      /* Lição: Loop Infinito */
         DMA_DMACCR_EN_STOP,
-        DMA_DMACCR_PRIO_HI,          /* Receber é ALTA prioridade */
+        DMA_DMACCR_PRIO_HI,
         DMA_DMACCR_FS_ELEMENT,
-        DMA_DMACCR_SYNC_REVT1        /* Sincronizar com o Evento de RECEÇÃO (Rx) */
+        DMA_DMACCR_SYNC_REVT1
     ), /* DMACCR */
 
     DMA_DMACICR_RMK(
         DMA_DMACICR_AERRIE_OFF,
         DMA_DMACICR_BLOCKIE_OFF,
         DMA_DMACICR_LASTIE_OFF,
-        DMA_DMACICR_FRAMEIE_ON,      /* <-- A "CAMPAINHA"! Ligar Interrupção! */
+        DMA_DMACICR_FRAMEIE_ON,
         DMA_DMACICR_FIRSTHALFIE_OFF,
         DMA_DMACICR_DROPIE_OFF,
         DMA_DMACICR_TIMEOUTIE_OFF
     ), /* DMACICR */
 
-    (DMA_AdrPtr)0x5800, // DMACSSAL - Endereço do McBSP DRR1 (Receive)
+    (DMA_AdrPtr)0x5800, // DMACSSAL
     0,                  // DMACSSAU
-    (DMA_AdrPtr)0x0000, // DMACDSAL - (Vamos definir isto na configAudioDma)
+    (DMA_AdrPtr)0x0000, // DMACDSAL
     0,                  // DMACDSAU
-    AUDIO_BUFFER_SIZE,  // DMACEN  - 96 elementos
-    1,                  // DMACFN  - Single frame
+    AUDIO_BUFFER_SIZE,  // DMACEN
+    1,                  // DMACFN
     0,                  // DMACSFI
     0,                  // DMACSEI
     0,                  // DMACDFI
@@ -165,17 +165,11 @@ void configAudioDma (void)
     dmaTxHandle = DMA_open(DMA_CHA0, 0);
     DMA_config(dmaTxHandle, &dmaTxConfig);
 
-    /* --- Configurar o Canal de Receção (Rx - Canal 1) --- */
-
-    //  Apontar o Rx para o nosso NOVO buffer de entrada (g_rxBuffer)
-    // E traduzir o endereço para Byte (<< 1)
     dmaRxConfig.dmacdsal = (DMA_AdrPtr)(((Uint32)&g_rxBuffer) << 1);
 
-    //Canal 1 para Rx
     dmaRxHandle = DMA_open(DMA_CHA1, 0);
     DMA_config(dmaRxHandle, &dmaRxConfig);
 
-    /* --- Configurar as Interrupções  --- */
     CSL_init();
     IRQ_setVecs((Uint32)(&VECSTART));
 
@@ -187,10 +181,10 @@ void configAudioDma (void)
     IRQ_clear(rcvEventId);
     IRQ_clear(xmtEventId);
 
-    IRQ_plug(rcvEventId, &dmaRxIsr); // Ligar
-    IRQ_plug(xmtEventId, &dmaTxIsr); // Ligar
+    IRQ_plug(rcvEventId, &dmaRxIsr);
+    IRQ_plug(xmtEventId, &dmaTxIsr);
 
-    IRQ_enable(rcvEventId); // Ligar APENAS a interrupção de Receção
+    IRQ_enable(rcvEventId);
 
     
     IRQ_globalEnable();
@@ -198,8 +192,8 @@ void configAudioDma (void)
 
 void startAudioDma (void)
 {
-    DMA_start(dmaRxHandle); // Ligar RECEPÇAO
-    DMA_start(dmaTxHandle); // Ligar TRANSMISSAO
+    DMA_start(dmaRxHandle);
+    DMA_start(dmaTxHandle);
 }
 // =========================================================================
 
@@ -207,76 +201,86 @@ void startAudioDma (void)
 
 void stopAudioDma (void)
 {
-    DMA_stop(dmaRxHandle);  // Parar Rx
-    DMA_stop(dmaTxHandle);  // Parar Tx
+    DMA_stop(dmaRxHandle);
+    DMA_stop(dmaTxHandle);
 }
 
 
 void changeTone (void)
 {
     // Não fazer nada.
-    // (Isto impede o projeto de "explodir" se o SW2 for premido)
+    // ( se o SW2 for premido)
 }
 
-/*
- * dmaRxIsr( )
- *
- * O DMA chama esta função QUANDO o g_rxBuffer está CHEIO.
- * Este é o "Cérebro" do nosso projeto.
- */
+// interrupção receiver
 interrupt void dmaRxIsr(void)
 {
     int i;
+    Int32 lfoSin_Q15;
+    Int32 currentDelay_L; // (Q15)
+    Int16 y_n, x_n, x_n_L;
+    Uint16 readIndex;
 
-    /*
- Preparar os Dados (Copiar Int -> Complex)
-     */
-    for (i = 0; i < N_FFT; i++)
+
+    for (i = 0; i < AUDIO_BUFFER_SIZE; i++) // (Lembre-se, AUDIO_BUFFER_SIZE = 128)
     {
-        g_fftBuffer[i].re = g_rxBuffer[i]; // (Parte Real é o áudio)
-        g_fftBuffer[i].im = 0;             // (Parte Imaginária é 0)
-    }
+        /* --- 1. Calcular o Atraso L(n) (Ponto Fixo) --- */
 
+        // (Ler o valor do LFO da nossa tabela)
+        lfoSin_Q15 = (Int32)g_lfoTable[g_lfoIndex]; // (Q15: -32767 a +32767)
 
-     
-    // (Re-ordenar)
-    bit_rev(g_fftBuffer, EXP_FFT);
-    
-    // (FFT)
-    fft(g_fftBuffer, EXP_FFT, g_twiddleTable, FFT_FLAG, SCALE_FLAG);
+        // (Avançar o ponteiro do LFO)
+        // (Usamos o g_lfoPhaseInc (float) para evitar "drift" de fase)
+        g_lfoIndex = (Uint16)(g_lfoIndex + (g_lfoPhaseInc * AUDIO_BUFFER_SIZE)) % LFO_SIZE;
 
-    // -----------------------------------------------------
-    // <-- O "PROCESSAMENTO" NO DOMÍNIO DA FREQUÊNCIA IRIA AQUI
-    // (Por agora, não fazemos nada, só testamos a "canalização")
-    // -----------------------------------------------------
+        // (L(n) = L0 + A * LFO)
+        // (A * lfoSin_Q15) -> (300 * Q15) >> 15 = (Q0 * Q15) >> 15 = Q0
+        currentDelay_L = FLANGER_L0 + ((FLANGER_A * lfoSin_Q15) >> 15);
 
-    // (FFT Inversa)
-    // fft(g_fftBuffer, EXP_FFT, g_twiddleTable, IFFT_FLAG, SCALE_FLAG);
+        /* --- 2. Ler a Amostra Atrasada x[n - L(n)] --- */
 
-    //Devolve os dados para o buffer de saida
-    for (i = 0; i < N_FFT; i++)
-    {
-        // (A FFT Inversa devolve o áudio na Parte Real)
-        g_txBuffer[i] = g_fftBuffer[i].re;
+        // (Encontrar o índice de leitura no buffer circular)
+        readIndex = (g_flangerWriteIndex - (int)currentDelay_L) & FLANGER_DELAY_MASK;
+
+        // (Ler a amostra atrasada)
+        x_n_L = g_flangerBuffer[readIndex];
+
+        /* --- 3. Aplicar a Equação 10.33 (Ponto Fixo) --- */
+
+        // (Pegar a amostra "seca" que acabou de chegar)
+        x_n = g_rxBuffer[i];
+
+        // (y(n) = x(n) + g * x[n - L(n)])
+        // (g * x_n_L) -> (Q15 * Q0) >> 15 = (Q15 * Q15) >> 15 = Q15
+        // (y_n = (x_n / 2) + (g*x_n_L / 2))
+        y_n = (x_n >> 1) + (Int16)(((Int32)FLANGER_g * (Int32)x_n_L) >> 15);
+
+        /* --- 4. Escrever de volta e Salvar --- */
+
+        // (Escrever o áudio "molhado" no buffer de saída)
+        g_txBuffer[i] = y_n;
+
+        // (Guardar o áudio "seco" no buffer de atraso para o futuro)
+        g_flangerBuffer[g_flangerWriteIndex] = x_n;
+
+        // (Avançar o "ponteiro" de escrita do buffer circular)
+        g_flangerWriteIndex = (g_flangerWriteIndex + 1) & FLANGER_DELAY_MASK;
     }
 }
 
-/* Transmissão. Não a usamos, mas tem de existir. */
+
 interrupt void dmaTxIsr(void)
 {
     // Não faz nada
 }
-
-void initFFT(void)
+void initLFO(void)
 {
-    Uint16 L, LE, LE1;
-    
-    // (Este loop é 100% "roubado" do intrinsic_fftTest.c)
-    for (L=1; L<=EXP_FFT; L++)
+    int i;
+    float rad;
+    for (i = 0; i < 256; i++)
     {
-        LE=1<<L;
-        LE1=LE>>1;
-        g_twiddleTable[L-1].re =  (Int16)(32768.0*cos(PI/LE1));
-        g_twiddleTable[L-1].im = -(Int16)(32768.0*sin(PI/LE1));
+        // (Gerar um seno de 0.0 a 1.0 e escalar para Q15)
+        rad = (float)i / 256.0 * (2.0 * PI);
+        g_lfoTable[i] = (Int16)(sinf(rad) * 32767.0);
     }
 }

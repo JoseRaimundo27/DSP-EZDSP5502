@@ -132,21 +132,21 @@ endif
 
 # Add inputs and outputs from these tool invocations to the build variables 
 EXE_OUTPUTS += \
-aic3204_dma_fft.out 
+aic3204_dma_flanger.out 
 
 EXE_OUTPUTS__QUOTED += \
-"aic3204_dma_fft.out" 
+"aic3204_dma_flanger.out" 
 
 
 # All Target
 all: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
-	@$(MAKE) --no-print-directory -Onone "aic3204_dma_fft.out"
+	@$(MAKE) --no-print-directory -Onone "aic3204_dma_flanger.out"
 
 # Tool invocations
-aic3204_dma_fft.out: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
+aic3204_dma_flanger.out: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
 	@echo 'Building target: "$@"'
 	@echo 'Invoking: C5500 Linker'
-	"/home/caco/ti/ccs1281/ccs/tools/compiler/c5500_4.4.1/bin/cl55" -v5502 --memory_model=small -g --define=c5502 --display_error_number --diag_warning=225 --sat_reassoc=on --ptrdiff_size=16 -z -m"aic3204_dma_fft.map" --stack_size=0x200 --heap_size=0x400 -i"/home/caco/ti/ccs1281/ccs/tools/compiler/c5500_4.4.1/lib" -i"/home/caco/ti/ccs1281/ccs/tools/compiler/c5500_4.4.1/include" --reread_libs --display_error_number --warn_sections --xml_link_info="aic3204_dma_fft_linkInfo.xml" --rom_model --sys_stacksize=0x200 -o "aic3204_dma_fft.out" $(ORDERED_OBJS)
+	"/home/caco/ti/ccs1281/ccs/tools/compiler/c5500_4.4.1/bin/cl55" -v5502 --memory_model=small -g --define=c5502 --display_error_number --diag_warning=225 --sat_reassoc=on --ptrdiff_size=16 -z -m"aic3204_dma_flanger.map" --stack_size=0x200 --heap_size=0x400 -i"/home/caco/ti/ccs1281/ccs/tools/compiler/c5500_4.4.1/lib" -i"/home/caco/ti/ccs1281/ccs/tools/compiler/c5500_4.4.1/include" --reread_libs --display_error_number --warn_sections --xml_link_info="aic3204_dma_flanger_linkInfo.xml" --rom_model --sys_stacksize=0x200 -o "aic3204_dma_flanger.out" $(ORDERED_OBJS)
 	@echo 'Finished building target: "$@"'
 	@echo ' '
 

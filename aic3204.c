@@ -1,52 +1,11 @@
-//////////////////////////////////////////////////////////////////////////////
-// * File name: aic3204.c
-// *                                                                          
-// * Description:  AIC3204 functions.
-// *                                                                          
-// * Copyright (C) 2011 Texas Instruments Incorporated - http://www.ti.com/ 
-// * Copyright (C) 2011 Spectrum Digital, Incorporated
-// *                                                                          
-// *                                                                          
-// *  Redistribution and use in source and binary forms, with or without      
-// *  modification, are permitted provided that the following conditions      
-// *  are met:                                                                
-// *                                                                          
-// *    Redistributions of source code must retain the above copyright        
-// *    notice, this list of conditions and the following disclaimer.         
-// *                                                                          
-// *    Redistributions in binary form must reproduce the above copyright     
-// *    notice, this list of conditions and the following disclaimer in the   
-// *    documentation and/or other materials provided with the                
-// *    distribution.                                                         
-// *                                                                          
-// *    Neither the name of Texas Instruments Incorporated nor the names of   
-// *    its contributors may be used to endorse or promote products derived   
-// *    from this software without specific prior written permission.         
-// *                                                                          
-// *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS     
-// *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT       
-// *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR   
-// *  A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT    
-// *  OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,   
-// *  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT        
-// *  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,   
-// *  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY   
-// *  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT     
-// *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE   
-// *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.    
-// *                                                                          
-//////////////////////////////////////////////////////////////////////////////
-#include "ezdsp5502_i2c.h"
 
+#include "ezdsp5502_i2c.h"
+#include "ezdsp5502.h"
+#include "ezdsp5502_i2c.h"
+#include "ezdsp5502_i2cgpio.h"
+#include "csl_types.h"
 #define AIC3204_I2C_ADDR  0x18
 
-/*
- *
- *  AIC3204_rset( regnum, regval )
- *
- *    Set codec register regnum to value regval
- *
- */
 Int16 AIC3204_rset( Uint16 regnum, Uint16 regval )
 {
     Uint16 cmd[2];
@@ -57,6 +16,8 @@ Int16 AIC3204_rset( Uint16 regnum, Uint16 regval )
 
     /* Write to AIC3204 Register */
     return EZDSP5502_I2C_write( AIC3204_I2C_ADDR, cmd, 2 );
+
+
 }
 
 /*
@@ -69,6 +30,15 @@ Int16 AIC3204_rset( Uint16 regnum, Uint16 regval )
  */
 void initAIC3204( )
 {
+    EZDSP5502_I2CGPIO_configLine( BSP_SEL1, OUT );
+    EZDSP5502_I2CGPIO_writeLine(  BSP_SEL1, LOW );
+
+    EZDSP5502_I2CGPIO_configLine( BSP_SEL1_ENn, OUT );
+    EZDSP5502_I2CGPIO_writeLine(  BSP_SEL1_ENn, LOW );
+
+        /* ---------------------------------------------------------------- *
+     *  Configure AIC3204                                               *
+     * ---------------------------------------------------------------- */
     AIC3204_rset( 0, 0 );      // Select page 0
     AIC3204_rset( 1, 1 );      // Reset codec
     AIC3204_rset( 0, 1 );      // Select page 1
@@ -107,7 +77,7 @@ void initAIC3204( )
     AIC3204_rset( 0x10, 0x00 );// Unmute HPL , 0dB gain
     AIC3204_rset( 0x11, 0x00 );// Unmute HPR , 0dB gain
     AIC3204_rset( 0, 0 );      // Select page 0
-    EZDSP5502_waitusec( 100 ); // wait
+    EZDSP5502_waitusec( 1000000 ); // wait
         
     /* ADC ROUTING and Power Up */
     AIC3204_rset( 0, 1 );      // Select page 1
@@ -118,6 +88,12 @@ void initAIC3204( )
     AIC3204_rset( 0x39, 0xc0 );// CM_1 (common mode) to RADC_M through 40 kohm
     AIC3204_rset( 0x3b, 0 );   // MIC_PGA_L unmute
     AIC3204_rset( 0x3c, 0 );   // MIC_PGA_R unmute
+
+    AIC3204_rset( 51, 0x60 ); // tentar 0x60
+    AIC3204_rset( 59, 0x28 ); // 5db = 0x0a, 10db = 0x14, 20db = 0x28
+    AIC3204_rset( 60, 0x5f );
+
+
     AIC3204_rset( 0, 0 );      // Select page 0
     AIC3204_rset( 0x51, 0xc0 );// Powerup Left and Right ADC
     AIC3204_rset( 0x52, 0 );   // Unmute Left and Right ADC

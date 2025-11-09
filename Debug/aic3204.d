@@ -7,7 +7,7 @@ aic3204.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ez
 aic3204.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/_csl.h
 aic3204.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_chiphal.h
 aic3204.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_std.h
-aic3204.obj: /home/caco/workspace_v12/aic3204_dma_fft/include/tistdtypes.h
+aic3204.obj: /home/caco/workspace_v12/aic3204_dma_flanger/include/tistdtypes.h
 aic3204.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_stdhal.h
 aic3204.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_datasz.h
 aic3204.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_chipdat.h
@@ -40,6 +40,9 @@ aic3204.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ez
 aic3204.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/_csl.h
 aic3204.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_irqhal.h
 aic3204.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_err.h
+aic3204.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/include/ezdsp5502_i2c.h
+aic3204.obj: /home/caco/workspace_v12/aic3204_dma_flanger/include/ezdsp5502_i2cgpio.h
+aic3204.obj: /home/caco/workspace_v12/aic3204_dma_flanger/include/csl_types.h
 
 ../aic3204.c:
 
@@ -55,7 +58,7 @@ aic3204.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ez
 
 /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_std.h:
 
-/home/caco/workspace_v12/aic3204_dma_fft/include/tistdtypes.h:
+/home/caco/workspace_v12/aic3204_dma_flanger/include/tistdtypes.h:
 
 /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_stdhal.h:
 
@@ -120,4 +123,10 @@ aic3204.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ez
 /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_irqhal.h:
 
 /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_err.h:
+
+/home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/include/ezdsp5502_i2c.h:
+
+/home/caco/workspace_v12/aic3204_dma_flanger/include/ezdsp5502_i2cgpio.h:
+
+/home/caco/workspace_v12/aic3204_dma_flanger/include/csl_types.h:
 
