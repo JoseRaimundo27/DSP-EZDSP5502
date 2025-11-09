@@ -1,9 +1,10 @@
 # FIXED
 
 include/ezdsp5502_mcbsp.obj: ../include/ezdsp5502_mcbsp.c
+include/ezdsp5502_mcbsp.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/SoftwarePackage/software/Ch11/Experiments/Exp11.6/fingerPrint/inc/tistdtypes.h
 include/ezdsp5502_mcbsp.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/demo_enet/common/bsl/include/ezdsp5502_mcbsp.h
 include/ezdsp5502_mcbsp.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/demo_enet/common/bsl/include/ezdsp5502.h
-include/ezdsp5502_mcbsp.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl.h
+include/ezdsp5502_mcbsp.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_mcbsp.h
 include/ezdsp5502_mcbsp.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/_csl.h
 include/ezdsp5502_mcbsp.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_chiphal.h
 include/ezdsp5502_mcbsp.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_std.h
@@ -40,16 +41,17 @@ include/ezdsp5502_mcbsp.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp
 include/ezdsp5502_mcbsp.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/_csl.h
 include/ezdsp5502_mcbsp.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_irqhal.h
 include/ezdsp5502_mcbsp.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_err.h
-include/ezdsp5502_mcbsp.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_mcbsp.h
 include/ezdsp5502_mcbsp.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_mcbsphal.h
 
 ../include/ezdsp5502_mcbsp.c:
+
+/home/caco/Área\ de\ trabalho/EngComp/LABIII/SoftwarePackage/software/Ch11/Experiments/Exp11.6/fingerPrint/inc/tistdtypes.h:
 
 /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/demo_enet/common/bsl/include/ezdsp5502_mcbsp.h:
 
 /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/demo_enet/common/bsl/include/ezdsp5502.h:
 
-/home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl.h:
+/home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_mcbsp.h:
 
 /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/_csl.h:
 
@@ -122,8 +124,6 @@ include/ezdsp5502_mcbsp.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp
 /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_irqhal.h:
 
 /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_err.h:
-
-/home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_mcbsp.h:
 
 /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_mcbsphal.h:
 

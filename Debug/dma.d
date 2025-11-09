@@ -1,8 +1,10 @@
 # FIXED
 
 dma.obj: ../dma.c
+dma.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/SoftwarePackage/software/Ch11/Experiments/Exp11.6/fingerPrint/inc/tistdtypes.h
 dma.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/demo_enet/common/bsl/include/ezdsp5502.h
-dma.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl.h
+dma.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/demo_enet/common/bsl/include/ezdsp5502_mcbsp.h
+dma.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_dma.h
 dma.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/_csl.h
 dma.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_chiphal.h
 dma.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_std.h
@@ -39,15 +41,17 @@ dma.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5
 dma.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/_csl.h
 dma.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_irqhal.h
 dma.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_err.h
-dma.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/demo_enet/common/bsl/include/ezdsp5502_mcbsp.h
-dma.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_dma.h
 dma.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_dmahal.h
 
 ../dma.c:
 
+/home/caco/Área\ de\ trabalho/EngComp/LABIII/SoftwarePackage/software/Ch11/Experiments/Exp11.6/fingerPrint/inc/tistdtypes.h:
+
 /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/demo_enet/common/bsl/include/ezdsp5502.h:
 
-/home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl.h:
+/home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/demo_enet/common/bsl/include/ezdsp5502_mcbsp.h:
+
+/home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_dma.h:
 
 /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/_csl.h:
 
@@ -120,10 +124,6 @@ dma.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5
 /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_irqhal.h:
 
 /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_err.h:
-
-/home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/demo_enet/common/bsl/include/ezdsp5502_mcbsp.h:
-
-/home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_dma.h:
 
 /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_dmahal.h:
 

@@ -1,44 +1,8 @@
 # FIXED
 
 main.obj: ../main.c
+main.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/SoftwarePackage/software/Ch11/Experiments/Exp11.6/fingerPrint/inc/tistdtypes.h
 main.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/demo_enet/common/bsl/include/ezdsp5502.h
-main.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl.h
-main.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/_csl.h
-main.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_chiphal.h
-main.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_std.h
-main.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/tistdtypes.h
-main.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_stdhal.h
-main.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_datasz.h
-main.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_chipdat.h
-main.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_icachdat.h
-main.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_irqdat.h
-main.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_datdat.h
-main.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_dmadat.h
-main.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_dmadatB.h
-main.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_emifdat.h
-main.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_gpiodat.h
-main.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_gpio5502dat.h
-main.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_plldat.h
-main.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_mcbspdat.h
-main.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_pwrdat.h
-main.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_timdat.h
-main.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_gptdat.h
-main.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_bctdat.h
-main.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_errdat.h
-main.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_mmcdat.h
-main.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_wdtimdat.h
-main.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_rtcdat.h
-main.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_time.h
-main.obj: /home/caco/ti/ccs1281/ccs/tools/compiler/c5500_4.4.1/include/linkage.h
-main.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_i2cdat.h
-main.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_uartdat.h
-main.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_csldat.h
-main.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_cslhal.h
-main.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_datasz.h
-main.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_irq.h
-main.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/_csl.h
-main.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_irqhal.h
-main.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_err.h
 main.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/demo_enet/common/bsl/include/ezdsp5502_mcbsp.h
 main.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/demo_enet/common/bsl/include/ezdsp5502_i2cgpio.h
 main.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/demo_boot/ezdsp_demo/inc/dma.h
@@ -46,86 +10,19 @@ main.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp
 main.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/demo_boot/ezdsp_demo/inc/lcd.h
 main.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/demo_boot/ezdsp_demo/inc/i2cgpio.h
 main.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_chip.h
+main.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_std.h
+main.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/tistdtypes.h
+main.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_chiphal.h
+main.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_stdhal.h
 main.obj: /home/caco/ti/ccs1281/ccs/tools/compiler/c5500_4.4.1/include/stdio.h
+main.obj: /home/caco/ti/ccs1281/ccs/tools/compiler/c5500_4.4.1/include/linkage.h
 main.obj: /home/caco/ti/ccs1281/ccs/tools/compiler/c5500_4.4.1/include/stdarg.h
 
 ../main.c:
 
+/home/caco/Área\ de\ trabalho/EngComp/LABIII/SoftwarePackage/software/Ch11/Experiments/Exp11.6/fingerPrint/inc/tistdtypes.h:
+
 /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/demo_enet/common/bsl/include/ezdsp5502.h:
-
-/home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl.h:
-
-/home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/_csl.h:
-
-/home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_chiphal.h:
-
-/home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_std.h:
-
-/home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/tistdtypes.h:
-
-/home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_stdhal.h:
-
-/home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_datasz.h:
-
-/home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_chipdat.h:
-
-/home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_icachdat.h:
-
-/home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_irqdat.h:
-
-/home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_datdat.h:
-
-/home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_dmadat.h:
-
-/home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_dmadatB.h:
-
-/home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_emifdat.h:
-
-/home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_gpiodat.h:
-
-/home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_gpio5502dat.h:
-
-/home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_plldat.h:
-
-/home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_mcbspdat.h:
-
-/home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_pwrdat.h:
-
-/home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_timdat.h:
-
-/home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_gptdat.h:
-
-/home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_bctdat.h:
-
-/home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_errdat.h:
-
-/home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_mmcdat.h:
-
-/home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_wdtimdat.h:
-
-/home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_rtcdat.h:
-
-/home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_time.h:
-
-/home/caco/ti/ccs1281/ccs/tools/compiler/c5500_4.4.1/include/linkage.h:
-
-/home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_i2cdat.h:
-
-/home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_uartdat.h:
-
-/home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_csldat.h:
-
-/home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_cslhal.h:
-
-/home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_datasz.h:
-
-/home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_irq.h:
-
-/home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/_csl.h:
-
-/home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_irqhal.h:
-
-/home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_err.h:
 
 /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/demo_enet/common/bsl/include/ezdsp5502_mcbsp.h:
 
@@ -141,7 +38,17 @@ main.obj: /home/caco/ti/ccs1281/ccs/tools/compiler/c5500_4.4.1/include/stdarg.h
 
 /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_chip.h:
 
+/home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_std.h:
+
+/home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/tistdtypes.h:
+
+/home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_chiphal.h:
+
+/home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_stdhal.h:
+
 /home/caco/ti/ccs1281/ccs/tools/compiler/c5500_4.4.1/include/stdio.h:
+
+/home/caco/ti/ccs1281/ccs/tools/compiler/c5500_4.4.1/include/linkage.h:
 
 /home/caco/ti/ccs1281/ccs/tools/compiler/c5500_4.4.1/include/stdarg.h:
 

@@ -12,14 +12,14 @@
 Uint8 dmaState = 0; // (Não mais usado, mas mantido por segurança)
 
 
-#define AUDIO_BUFFER_SIZE 140 // Manter o mesmo tamanho do demo
+#define AUDIO_BUFFER_SIZE 1024 // Manter o mesmo tamanho do demo
 
 #pragma DATA_SECTION(g_rxBuffer, "dmaMem")
-#pragma DATA_ALIGN(g_rxBuffer, 16)
+#pragma DATA_ALIGN(g_rxBuffer, 4)
 Uint16 g_rxBuffer[AUDIO_BUFFER_SIZE]; // Onde o "Line In" escreve (BUFFER DE ENTRADA)
 
 #pragma DATA_SECTION(g_txBuffer, "dmaMem")
-#pragma DATA_ALIGN(g_txBuffer, 16)
+#pragma DATA_ALIGN(g_txBuffer, 4)
 Uint16 g_txBuffer[AUDIO_BUFFER_SIZE]; // De onde o "Headphone" lê (BUFFER DE SAÍDA)
 // =========================================================================
 

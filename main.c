@@ -72,7 +72,7 @@ Uint8 sw2State = 0;       // SW2 state
  *    7. Generates output on LCD screen
  */
 void main(void)
-{
+ {
     /* Demo Initialization */
     //initPLL( );         // Initialize PLL
     EZDSP5502_init( );  // Board Initialization

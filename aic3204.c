@@ -3,6 +3,7 @@
 #include "ezdsp5502.h"
 #include "ezdsp5502_i2c.h"
 #include "ezdsp5502_i2cgpio.h"
+#include "csl_types.h"
 #define AIC3204_I2C_ADDR  0x18
 
 Int16 AIC3204_rset( Uint16 regnum, Uint16 regval )
