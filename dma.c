@@ -12,14 +12,14 @@
 Uint8 dmaState = 0; // (Não mais usado, mas mantido por segurança)
 
 
-#define AUDIO_BUFFER_SIZE 1024 // Manter o mesmo tamanho do demo
+#define AUDIO_BUFFER_SIZE 4096 // Manter o mesmo tamanho do demo
 
 #pragma DATA_SECTION(g_rxBuffer, "dmaMem")
-#pragma DATA_ALIGN(g_rxBuffer, 4)
+#pragma DATA_ALIGN(g_rxBuffer, 4096)
 Uint16 g_rxBuffer[AUDIO_BUFFER_SIZE]; // Onde o "Line In" escreve (BUFFER DE ENTRADA)
 
 #pragma DATA_SECTION(g_txBuffer, "dmaMem")
-#pragma DATA_ALIGN(g_txBuffer, 4)
+#pragma DATA_ALIGN(g_txBuffer, 4096)
 Uint16 g_txBuffer[AUDIO_BUFFER_SIZE]; // De onde o "Headphone" lê (BUFFER DE SAÍDA)
 // =========================================================================
 
@@ -63,7 +63,7 @@ DMA_Config dmaTxConfig = { // (Renomeado de 'myconfig' para 'dmaTxConfig')
     0,                  // DMACSSAU
     (DMA_AdrPtr)0x5804, // DMACDSAL - DMA destination is DXR1 (Transmit)
     0,                  // DMACDSAU 
-    AUDIO_BUFFER_SIZE,  // DMACEN  - 96 elementos
+    AUDIO_BUFFER_SIZE,  // DMACEN  - 1024 elementos
     1,                  // DMACFN  - Single frame
     0,                  // DMACSFI - Source frame index
     0,                  // DMACSEI - Source element index
@@ -105,7 +105,7 @@ DMA_Config dmaRxConfig = {
         DMA_DMACICR_AERRIE_OFF,
         DMA_DMACICR_BLOCKIE_OFF,
         DMA_DMACICR_LASTIE_OFF,
-        DMA_DMACICR_FRAMEIE_ON,      /* <-- A "CAMPAINHA"! Ligar Interrupção! */
+        DMA_DMACICR_FRAMEIE_ON,
         DMA_DMACICR_FIRSTHALFIE_OFF,
         DMA_DMACICR_DROPIE_OFF,
         DMA_DMACICR_TIMEOUTIE_OFF
@@ -115,7 +115,7 @@ DMA_Config dmaRxConfig = {
     0,                  // DMACSSAU
     (DMA_AdrPtr)0x0000, // DMACDSAL - (Vamos definir isto na configAudioDma)
     0,                  // DMACDSAU
-    AUDIO_BUFFER_SIZE,  // DMACEN  - 96 elementos
+    AUDIO_BUFFER_SIZE,  // DMACEN  - 1024 elementos
     1,                  // DMACFN  - Single frame
     0,                  // DMACSFI
     0,                  // DMACSEI
