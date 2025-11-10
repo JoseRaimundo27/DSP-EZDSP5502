@@ -372,8 +372,8 @@ void processAudioReverb(void)
 interrupt void dmaRxIsr(void)
 {
     //processAudioFlanger();
-    //processAudioTremolo();
-    processAudioReverb();
+    processAudioTremolo();
+    //processAudioReverb();
 }
 
 

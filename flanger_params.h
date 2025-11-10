@@ -20,7 +20,7 @@
 // (Profundidade (1.0 em Q15 - G_depth = 1.0))
 #define FLANGER_g     32767   //16384 ou 32767
 // (Velocidade do LFO (0.2 Hz))
-#define FLANGER_fr    0.2
+#define FLANGER_fr    0.05
 
 
 //--------------- PARÂMETROS DOS BUFFERS --------------------------
