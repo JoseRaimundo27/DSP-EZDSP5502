@@ -59,18 +59,7 @@ Uint8 ledNum = 3;         // I2C GPIO LED number
 Uint8 sw1State = 0;       // SW1 state
 Uint8 sw2State = 0;       // SW2 state
 
-/*
- *  main( )
- *
- *    The following functions are performed by this demo
- *    1. Outputs audio tone from STEREO OUT jack
- *    2. Uses DMA to service McBSP for audio
- *    3. Uses timer0 to create time base
- *    4. Use SW1 to swap between two timer periods
- *    5. Use SW2 to swap between two audio tones
- *    6. Uses timer0 interrupt to trigger LED state change
- *    7. Generates output on LCD screen
- */
+
 void main(void)
 {
     /* Demo Initialization */

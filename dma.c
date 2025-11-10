@@ -4,8 +4,12 @@
 #include "csl_irq.h"
 #include <math.h>
 #include "icomplex.h"
+#include "flanger_params.h"
 
 #define AUDIO_BUFFER_SIZE 4096 // BUFFER MAIOR
+#define FS 48000
+#define PI 3.14159265359
+
 
 #pragma DATA_SECTION(g_rxBuffer, "dmaMem")
 #pragma DATA_ALIGN(g_rxBuffer, 4096)
@@ -15,33 +19,14 @@ Uint16 g_rxBuffer[AUDIO_BUFFER_SIZE]; // Onde o "Line In" escreve (BUFFER DE ENT
 #pragma DATA_ALIGN(g_txBuffer, 4096)
 Uint16 g_txBuffer[AUDIO_BUFFER_SIZE]; // De onde o "Headphone" lê (BUFFER DE SAÍDA)
 
-
-//--------------- PARAMETROS PARA O FLANGER ----------------------------
-// (A nossa taxa de amostragem de hardware)
-#define FS 48000
-#define PI 3.14159265359
-
-// (Parâmetros adaptados do Exp10.6 para 48kHz)
-#define FLANGER_L0    600     // Atraso Médio (100 * 6) (AGORA INT)
-#define FLANGER_A     300     // Variação (L0 * 0.5 = 300) (AGORA INT)
-#define FLANGER_g     16384   // Profundidade (1.0 em Q15 = 16384)
-#define FLANGER_fr    0.2     // Velocidade do LFO (1 Hz)
-
-// O "Buffer de Atraso" (Delay Line) do Flanger
-// Tem de ser MAIOR que L0 + A = 600 + 300 = 900
-// Vamos usar um buffer seguro de 1024 (potência de 2)
-#define FLANGER_DELAY_SIZE 1024
-#define FLANGER_DELAY_MASK (FLANGER_DELAY_SIZE - 1) // (Para loop rápido)
-
+//FLANGER:
 #pragma DATA_SECTION(g_flangerBuffer, "flangerMem")
 #pragma DATA_ALIGN(g_flangerBuffer, 4)
 Int16 g_flangerBuffer[FLANGER_DELAY_SIZE]; // O nosso buffer circular
 volatile Uint16 g_flangerWriteIndex = 0;  // Onde escrevemos no buffer
 
-// O "LFO" de Ponto Fixo (Tabela de Seno de 256 amostras)
-#define LFO_SIZE 256
 Int16 g_lfoTable[LFO_SIZE];
-volatile Uint16 g_lfoIndex = 0; // O "ponteiro" do LFO
+volatile Uint16 g_lfoIndex = 0; 
 float g_lfoPhaseInc = (LFO_SIZE * FLANGER_fr) / (float)FS; // (Calculado 1 vez)
 
 //(ISRs):

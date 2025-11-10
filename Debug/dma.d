@@ -50,6 +50,7 @@ dma.obj: /home/caco/ti/ccs1281/ccs/tools/compiler/c5500_4.4.1/include/mathf.h
 dma.obj: /home/caco/ti/ccs1281/ccs/tools/compiler/c5500_4.4.1/include/mathl.h
 dma.obj: /home/caco/ti/ccs1281/ccs/tools/compiler/c5500_4.4.1/include/unaccess.h
 dma.obj: /home/caco/workspace_v12/aic3204_dma_flanger/include/icomplex.h
+dma.obj: ../flanger_params.h
 
 ../dma.c:
 
@@ -150,4 +151,6 @@ dma.obj: /home/caco/workspace_v12/aic3204_dma_flanger/include/icomplex.h
 /home/caco/ti/ccs1281/ccs/tools/compiler/c5500_4.4.1/include/unaccess.h:
 
 /home/caco/workspace_v12/aic3204_dma_flanger/include/icomplex.h:
+
+../flanger_params.h:
 
