@@ -69,7 +69,7 @@ void main(void)
     configPort( );      // Configure MUXs
     //initTimer0( );      // Initialize timer
     initAIC3204( );     // Initialize AIC3204
-    initLFO();
+    initAlgorithms(); // initLFO e Reverb
     
     configAudioDma( );  // Configure DMA for Audio tone
     
