@@ -157,7 +157,6 @@ void configAudioDma (void)
 {
     Uint16 rcvEventId, xmtEventId;
 
-    
     // Aponta o Tx para o nosso NOVO buffer de saída (g_txBuffer)
     dmaTxConfig.dmacssal = (DMA_AdrPtr)(((Uint32)&g_txBuffer) << 1);
     
@@ -196,8 +195,6 @@ void startAudioDma (void)
     DMA_start(dmaTxHandle);
 }
 // =========================================================================
-
-
 
 void stopAudioDma (void)
 {
