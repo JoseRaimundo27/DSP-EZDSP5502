@@ -25,7 +25,7 @@ Uint16 g_txBuffer[AUDIO_BUFFER_SIZE]; // De onde o "Headphone" lê (BUFFER DE SA
 #define FLANGER_L0    600     // Atraso Médio (100 * 6) (AGORA INT)
 #define FLANGER_A     300     // Variação (L0 * 0.5 = 300) (AGORA INT)
 #define FLANGER_g     16384   // Profundidade (1.0 em Q15 = 16384)
-#define FLANGER_fr    1     // Velocidade do LFO (1 Hz)
+#define FLANGER_fr    0.2     // Velocidade do LFO (1 Hz)
 
 // O "Buffer de Atraso" (Delay Line) do Flanger
 // Tem de ser MAIOR que L0 + A = 600 + 300 = 900
@@ -48,6 +48,9 @@ float g_lfoPhaseInc = (LFO_SIZE * FLANGER_fr) / (float)FS; // (Calculado 1 vez)
 extern void VECSTART(void);
 interrupt void dmaRxIsr(void);
 interrupt void dmaTxIsr(void);
+
+// <-- NOVO PROTÓTIPO para a função de processamento
+void processAudioFlanger(void);
 
 
 DMA_Config dmaTxConfig = { // (Renomeado de 'myconfig' para 'dmaTxConfig')
@@ -209,16 +212,17 @@ void changeTone (void)
     // ( se o SW2 for premido)
 }
 
-// interrupção receiver
-interrupt void dmaRxIsr(void)
+
+void processAudioFlanger(void)
 {
+    // (Todas as variáveis locais que estavam na ISR)
     int i;
     Int32 lfoSin_Q15;
     Int32 currentDelay_L; // (Q15)
     Int16 y_n, x_n, x_n_L;
     Uint16 readIndex;
 
-
+    // (O loop de processamento que estava na ISR)
     for (i = 0; i < AUDIO_BUFFER_SIZE; i++) // (Lembre-se, AUDIO_BUFFER_SIZE = 128)
     {
         /* --- 1. Calcular o Atraso L(n) (Ponto Fixo) --- */
@@ -232,7 +236,7 @@ interrupt void dmaRxIsr(void)
 
         // (L(n) = L0 + A * LFO)
         // (A * lfoSin_Q15) -> (300 * Q15) >> 15 = (Q0 * Q15) >> 15 = Q0
-        currentDelay_L = FLANGER_L0 + ((FLANGER_A * lfoSin_Q15) >> 15);
+        currentDelay_L = FLANGER_L0 + ((FLANGER_A * lfoSin_Q15) >> 16);
 
         /* --- 2. Ler a Amostra Atrasada x[n - L(n)] --- */
 
@@ -250,7 +254,7 @@ interrupt void dmaRxIsr(void)
         // (y(n) = x(n) + g * x[n - L(n)])
         // (g * x_n_L) -> (Q15 * Q0) >> 15 = (Q15 * Q15) >> 15 = Q15
         // (y_n = (x_n / 2) + (g*x_n_L / 2))
-        y_n = (x_n >> 1) + (Int16)(((Int32)FLANGER_g * (Int32)x_n_L) >> 15);
+        y_n = (x_n >> 1) + (Int16)(((Int32)FLANGER_g * (Int32)x_n_L) >> 16);
 
         /* --- 4. Escrever de volta e Salvar --- */
 
@@ -266,10 +270,18 @@ interrupt void dmaRxIsr(void)
 }
 
 
+// interrupção receiver
+interrupt void dmaRxIsr(void)
+{
+    processAudioFlanger();
+}
+
+
 interrupt void dmaTxIsr(void)
 {
     // Não faz nada
 }
+
 void initLFO(void)
 {
     int i;

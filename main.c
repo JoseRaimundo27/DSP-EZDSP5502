@@ -80,6 +80,7 @@ void main(void)
     configPort( );      // Configure MUXs
     //initTimer0( );      // Initialize timer
     initAIC3204( );     // Initialize AIC3204
+    initLFO();
     
     configAudioDma( );  // Configure DMA for Audio tone
     
@@ -181,4 +182,5 @@ void checkSwitch(void)
     else                      // SW2 not pressed
         sw2State = 1;         // Set state to 1 to allow tone change
 }
+
 
