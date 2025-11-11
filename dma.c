@@ -9,7 +9,11 @@
 #include "tremolo_params.h"
 #include "reverb_params.h"
 
-#define AUDIO_BUFFER_SIZE 4096 // BUFFER MAIOR
+#define AUDIO_BUFFER_SIZE 4096 // Tamanho TOTAL
+
+// Processar em blocos de 2048 (dois blocos -> DMA PING PONG)
+#define AUDIO_BLOCK_SIZE (AUDIO_BUFFER_SIZE / 2)
+// =========================================================
 #define FS 48000
 #define PI 3.14159265359
 
@@ -50,11 +54,18 @@ extern void VECSTART(void);
 interrupt void dmaRxIsr(void);
 interrupt void dmaTxIsr(void);
 
-// <-- NOVO PROTÓTIPO para a função de processamento
-void processAudioFlanger(void);
+
+// As funcoes aceitam ponteiros para os blocos de áudio (pingpong)
+void processAudioFlanger(Uint16* rxBlock, Uint16* txBlock);
+void processAudioTremolo(Uint16* rxBlock, Uint16* txBlock);
+void processAudioReverb(Uint16* rxBlock, Uint16* txBlock);
+
+// Flag para controlar qual bloco (Ping ou Pong) está ativo
+static volatile Uint16 dmaPingPongFlag = 0;
+// =========================================================
 
 
-DMA_Config dmaTxConfig = { // (Renomeado de 'myconfig' para 'dmaTxConfig')
+DMA_Config dmaTxConfig = { // (Configuração do Tx - Sem Alterações)
     DMA_DMACSDP_RMK(
         DMA_DMACSDP_DSTBEN_NOBURST , // Destination burst
         DMA_DMACSDP_DSTPACK_OFF,     // Destination packing
@@ -70,8 +81,8 @@ DMA_Config dmaTxConfig = { // (Renomeado de 'myconfig' para 'dmaTxConfig')
         DMA_DMACCR_SRCAMODE_POSTINC, // Source address mode
         DMA_DMACCR_ENDPROG_OFF,      // End of programmation bit
         DMA_DMACCR_WP_DEFAULT,
-        DMA_DMACCR_REPEAT_ALWAYS,    // (Lição: Loop Infinito)
-        DMA_DMACCR_AUTOINIT_ON,      // (Lição: Loop Infinito)
+        DMA_DMACCR_REPEAT_ALWAYS,    // (Loop Infinito)
+        DMA_DMACCR_AUTOINIT_ON,      // (Loop Infinito)
         DMA_DMACCR_EN_STOP,          // Channel enable
         DMA_DMACCR_PRIO_HI,          // Channel priority
         DMA_DMACCR_FS_ELEMENT,       // Frame\Element Sync
@@ -82,28 +93,28 @@ DMA_Config dmaTxConfig = { // (Renomeado de 'myconfig' para 'dmaTxConfig')
         DMA_DMACICR_AERRIE_OFF,
         DMA_DMACICR_BLOCKIE_OFF ,    // Whole block interrupt enable
         DMA_DMACICR_LASTIE_OFF,      // Last frame Interrupt enable
-        DMA_DMACICR_FRAMEIE_OFF,     // (Lição: Interrupção de Tx DESLIGADA)
-        DMA_DMACICR_FIRSTHALFIE_OFF, // HAlf frame interrupt enable
+        DMA_DMACICR_FRAMEIE_OFF,     // (Tx NÃO precisa de interrupção)
+        DMA_DMACICR_FIRSTHALFIE_OFF, // (Tx NÃO precisa de interrupção)
         DMA_DMACICR_DROPIE_OFF,      // Sync event drop interrupt enable
         DMA_DMACICR_TIMEOUTIE_OFF    // Time out inetrrupt enable
     ), /* DMACICR */
     
-    (DMA_AdrPtr)0x0000, // DMACSSAL - (Vamos definir isto na configAudioDma)
-    0,                  // DMACSSAU
-    (DMA_AdrPtr)0x5804, // DMACDSAL - DMA destination is DXR1 (Transmit)
-    0,                  // DMACDSAU 
-    AUDIO_BUFFER_SIZE,  // DMACEN  - 96 elementos
-    1,                  // DMACFN  - Single frame
-    0,                  // DMACSFI - Source frame index
-    0,                  // DMACSEI - Source element index
-    0,                  // DMACDFI - Destination frame index
-    0                   // DMACDEI - (Demo usava 2, mas 0 é mais seguro)
+    (DMA_AdrPtr)0x0000,
+    0,
+    (DMA_AdrPtr)0x5804,
+    0,
+    AUDIO_BUFFER_SIZE,  // (Tamanho total)
+    1,
+    0,
+    0,
+    0,
+    0
 };
 
 
-//COnfiguraçoes da recepçao
-DMA_Handle dmaRxHandle; // Handle para o nosso novo canal de Receção
-DMA_Handle dmaTxHandle; // Handle para o canal de Transmissão
+//Configurações da recepção
+DMA_Handle dmaRxHandle;
+DMA_Handle dmaTxHandle;
 
 
 DMA_Config dmaRxConfig = {
@@ -122,34 +133,37 @@ DMA_Config dmaRxConfig = {
         DMA_DMACCR_SRCAMODE_CONST,
         DMA_DMACCR_ENDPROG_OFF,
         DMA_DMACCR_WP_DEFAULT,
-        DMA_DMACCR_REPEAT_ALWAYS,    /* Lição: Loop Infinito */
-        DMA_DMACCR_AUTOINIT_ON,      /* Lição: Loop Infinito */
+        DMA_DMACCR_REPEAT_ALWAYS,
+        DMA_DMACCR_AUTOINIT_ON,
         DMA_DMACCR_EN_STOP,
         DMA_DMACCR_PRIO_HI,
         DMA_DMACCR_FS_ELEMENT,
         DMA_DMACCR_SYNC_REVT1
     ), /* DMACCR */
 
+    // =================== ALTERAÇÃO PING-PONG ===================
+    // Ativamos AMBAS as interrupções: Meio-Buffer e Fim-Buffer
     DMA_DMACICR_RMK(
         DMA_DMACICR_AERRIE_OFF,
         DMA_DMACICR_BLOCKIE_OFF,
         DMA_DMACICR_LASTIE_OFF,
-        DMA_DMACICR_FRAMEIE_ON,
-        DMA_DMACICR_FIRSTHALFIE_OFF,
+        DMA_DMACICR_FRAMEIE_ON,      /* Interrupção de FIM (processar Bloco PONG) */
+        DMA_DMACICR_FIRSTHALFIE_ON,  /* Interrupção de MEIO (processar Bloco PING) */
         DMA_DMACICR_DROPIE_OFF,
         DMA_DMACICR_TIMEOUTIE_OFF
     ), /* DMACICR */
+    // =========================================================
 
-    (DMA_AdrPtr)0x5800, // DMACSSAL
-    0,                  // DMACSSAU
-    (DMA_AdrPtr)0x0000, // DMACDSAL
-    0,                  // DMACDSAU
-    AUDIO_BUFFER_SIZE,  // DMACEN
-    1,                  // DMACFN
-    0,                  // DMACSFI
-    0,                  // DMACSEI
-    0,                  // DMACDFI
-    0                   // DMACDEI
+    (DMA_AdrPtr)0x5800,
+    0,
+    (DMA_AdrPtr)0x0000,
+    0,
+    AUDIO_BUFFER_SIZE,  // (Tamanho total)
+    1,
+    0,
+    0,
+    0,
+    0
 };
 
 
@@ -187,7 +201,7 @@ void configAudioDma (void)
     IRQ_plug(rcvEventId, &dmaRxIsr);
     IRQ_plug(xmtEventId, &dmaTxIsr);
 
-    IRQ_enable(rcvEventId);
+    IRQ_enable(rcvEventId); // (Ligar APENAS a interrupção de Rx)
 
     
     IRQ_globalEnable();
@@ -195,6 +209,11 @@ void configAudioDma (void)
 
 void startAudioDma (void)
 {
+    // =================== ALTERAÇÃO PING-PONG ===================
+    // Resetar o flag antes de começar
+    dmaPingPongFlag = 0;
+    // =========================================================
+
     DMA_start(dmaRxHandle);
     DMA_start(dmaTxHandle);
 }
@@ -210,57 +229,49 @@ void stopAudioDma (void)
 void changeTone (void)
 {
     // Não fazer nada.
-    // ( se o SW2 for premido)
 }
 
-
-void processAudioFlanger(void)
+// =================== ALTERAÇÃO PING-PONG ===================
+// Função MODIFICADA
+// Agora processa apenas um BLOCO (Ping ou Pong)
+// =========================================================
+void processAudioFlanger(Uint16* rxBlock, Uint16* txBlock)
 {
-    // (Todas as variáveis locais que estavam na ISR)
     int i;
     Int32 lfoSin_Q15;
-    Int32 currentDelay_L; // (Q15)
+    Int32 currentDelay_L;
     Int16 y_n, x_n, x_n_L;
     Uint16 readIndex;
 
-    // (O loop de processamento que estava na ISR)
-    for (i = 0; i < AUDIO_BUFFER_SIZE; i++) // (Lembre-se, AUDIO_BUFFER_SIZE = 128)
+    // O loop agora itera apenas sobre o BLOCO (metade do buffer)
+    for (i = 0; i < AUDIO_BLOCK_SIZE; i++)
     {
         /* --- 1. Calcular o Atraso L(n) (Ponto Fixo) --- */
-
-        // (Ler o valor do LFO da nossa tabela)
-        lfoSin_Q15 = (Int32)g_lfoTable[g_lfoIndex]; // (Q15: -32767 a +32767)
+        lfoSin_Q15 = (Int32)g_lfoTable[g_lfoIndex];
 
         // (Avançar o ponteiro do LFO)
-        // (Usamos o g_lfoPhaseInc (float) para evitar "drift" de fase)
+        // (NOTA: A velocidade do LFO será o dobro se AUDIO_BLOCK_SIZE
+        //  for usado aqui. Mantemos o incremento original
+        //  baseado em AUDIO_BUFFER_SIZE para manter a freq. correta)
         g_lfoIndex = (Uint16)(g_lfoIndex + (g_lfoPhaseInc * AUDIO_BUFFER_SIZE)) % LFO_SIZE;
 
-        // (L(n) = L0 + A * LFO)
-        // (A * lfoSin_Q15) -> (300 * Q15) >> 15 = (Q0 * Q15) >> 15 = Q0
         currentDelay_L = FLANGER_L0 + ((FLANGER_A * lfoSin_Q15) >> 16);
 
         /* --- 2. Ler a Amostra Atrasada x[n - L(n)] --- */
-
-        // (Encontrar o índice de leitura no buffer circular)
         readIndex = (g_flangerWriteIndex - (int)currentDelay_L) & FLANGER_DELAY_MASK;
-
-        // (Ler a amostra atrasada)
         x_n_L = g_flangerBuffer[readIndex];
 
         /* --- 3. Aplicar a Equação 10.33 (Ponto Fixo) --- */
 
-        // (Pegar a amostra "seca" que acabou de chegar)
-        x_n = g_rxBuffer[i];
+        // (Ler do BLOCO de entrada, não do buffer global)
+        x_n = rxBlock[i];
 
-        // (y(n) = x(n) + g * x[n - L(n)])
-        // (g * x_n_L) -> (Q15 * Q0) >> 15 = (Q15 * Q15) >> 15 = Q15
-        // (y_n = (x_n / 2) + (g*x_n_L / 2))
         y_n = (x_n >> 1) + (Int16)(((Int32)FLANGER_g * (Int32)x_n_L) >> 16);
 
         /* --- 4. Escrever de volta e Salvar --- */
 
-        // (Escrever o áudio "molhado" no buffer de saída)
-        g_txBuffer[i] = y_n;
+        // (Escrever no BLOCO de saída, não no buffer global)
+        txBlock[i] = y_n;
 
         // (Guardar o áudio "seco" no buffer de atraso para o futuro)
         g_flangerBuffer[g_flangerWriteIndex] = x_n;
@@ -270,7 +281,9 @@ void processAudioFlanger(void)
     }
 }
 
-void processAudioTremolo(void)
+
+// Agora processa apenas um BLOCO (Ping ou Pong)
+void processAudioTremolo(Uint16* rxBlock, Uint16* txBlock)
 {
     int i;
     Int16 x_n, y_n;
@@ -279,50 +292,41 @@ void processAudioTremolo(void)
     Int32 env_Q15;
     Int32 x_n_scaled;
 
-    // (O loop de processamento)
-    for (i = 0; i < AUDIO_BUFFER_SIZE; i++) 
+    // O loop agora itera apenas sobre o BLOCO (metade do buffer)
+    for (i = 0; i < AUDIO_BLOCK_SIZE; i++)
     {
         /* --- 1. Obter Amostra "Seca" e aplicar ganho --- */
-        // (x_n = g_rxBuffer[i] * 0.7)
-        x_n = g_rxBuffer[i];
+
+        // (Ler do BLOCO de entrada, não do buffer global)
+        x_n = rxBlock[i];
         x_n_scaled = ((Int32)x_n * (Int32)TREMOLO_INPUT_GAIN_Q15) >> 15;
 
         /* --- 2. Obter valor do LFO (Bipolar Q15: -1.0 a +1.0) --- */
         lfo_val_Q15 = (Int32)g_lfoTable[g_lfoIndex];
 
         // (Avançar o ponteiro do LFO)
-        // (NOTA: Estamos a usar o 'g_lfoPhaseInc' global.
-        //  Para usar a frequência do Tremolo, g_lfoPhaseInc deve ser
-        //  calculado usando TREMOLO_fr na sua inicialização)
+        // (Ver nota no Flanger: mantemos o incremento original)
         g_lfoIndex = (Uint16)(g_lfoIndex + (g_lfoPhaseInc * AUDIO_BUFFER_SIZE)) % LFO_SIZE;
 
         /* --- 3. Calcular Envelope de Modulação (Q15) --- */
-        
-        // (m = LFO * Depth) -> (Q15 * Q15) >> 15 = Q15
         m_Q15 = ((Int32)lfo_val_Q15 * (Int32)TREMOLO_DEPTH_Q15) >> 15;
-        
-        // (env = m + Offset) -> (Q15 + Q15) = Q15
-        // (Isto irá variar de 0 (se LFO=-1) a 32768 (se LFO=+1))
         env_Q15 = m_Q15 + (Int32)TREMOLO_OFFSET_Q15;
         
         /* --- 4. Aplicar Envelope (Saída = Envelope * Amostra) --- */
-
-        // (y(n) = env * x_n_scaled) -> (Q15 * Q15) >> 15 = Q15
         y_n = (Int16)( ((Int32)env_Q15 * x_n_scaled) >> 15 );
 
 
         /* --- 5. Escrever de volta --- */
         
-        // (Escrever o áudio "molhado" no buffer de saída)
-        g_txBuffer[i] = y_n;
-        
-        // (Não precisamos de salvar nada no buffer de delay como no flanger)
+        // (Escrever no BLOCO de saída, não no buffer global)
+        txBlock[i] = y_n;
     }
 }
 
-void processAudioReverb(void)
+// Agora processa apenas um BLOCO (Ping ou Pong)
+void processAudioReverb(Uint16* rxBlock, Uint16* txBlock)
 {
-    int i; // (Índice do buffer DMA)
+    int i; // (Índice do bloco DMA)
     int l; // (Índice da Resposta ao Impulso h(l))
 
     Int16 x_n, y_n;
@@ -331,11 +335,13 @@ void processAudioReverb(void)
     Int16 x_n_l; // Amostra atrasada x(n-l)
     Int16 h_l;   // Coeficiente h(l)
 
-    // (Loop principal para cada amostra no buffer DMA)
-    for (i = 0; i < AUDIO_BUFFER_SIZE; i++)
+    // O loop agora itera apenas sobre o BLOCO (metade do buffer)
+    for (i = 0; i < AUDIO_BLOCK_SIZE; i++)
     {
         /* --- 1. Obter amostra e guardar no buffer de atraso --- */
-        x_n = g_rxBuffer[i];
+
+        // (Ler do BLOCO de entrada, não do buffer global)
+        x_n = rxBlock[i];
         g_reverbBuffer[g_reverbWriteIndex] = x_n;
 
         /* --- 2. Calcular a Convolução (Eq 10.25) --- */
@@ -344,23 +350,18 @@ void processAudioReverb(void)
         // (Loop interno para y(n) = SOMA( h(l) * x(n-l) ))
         for (l = 0; l < REVERB_IR_SIZE; l++)
         {
-            // Obter o coeficiente h(l)
             h_l = g_reverbIR[l];
-
-            // Obter a amostra atrasada x(n-l)
             readIndex = (g_reverbWriteIndex - l) & REVERB_DELAY_MASK;
             x_n_l = g_reverbBuffer[readIndex];
 
-            // Acumular: (Q15 * Q15)
             y_n_32 += (Int32)h_l * (Int32)x_n_l;
         }
 
         /* --- 3. Escalar e escrever a saída --- */
-
-        // (Escalar o resultado de volta para 16 bits)
-        // (A soma Q15*Q15 resultou em Q30, voltamos para Q15)
         y_n = (Int16)(y_n_32 >> 15);
-        g_txBuffer[i] = y_n;
+
+        // (Escrever no BLOCO de saída, não no buffer global)
+        txBlock[i] = y_n;
 
 
         /* --- 4. Avançar o ponteiro de escrita --- */
@@ -368,12 +369,31 @@ void processAudioReverb(void)
     }
 }
 
-// interrupção receiver
+
 interrupt void dmaRxIsr(void)
 {
-    //processAudioFlanger();
-    processAudioTremolo();
-    //processAudioReverb();
+    if (dmaPingPongFlag == 0)
+    {
+        // --- Processar Bloco PING ---
+
+        // Chamar a função de processamento para o Bloco PING
+        //processAudioFlanger(&g_rxBuffer[0], &g_txBuffer[0]);
+        processAudioTremolo(&g_rxBuffer[0], &g_txBuffer[0]);
+        //processAudioReverb(&g_rxBuffer[0], &g_txBuffer[0]);
+
+        dmaPingPongFlag = 1; // Na próxima interrupção, processar o PONG
+    }
+    else
+    {
+        // --- Processar Bloco PONG ---
+
+        // Chamar a função de processamento para o Bloco PONG
+        //processAudioFlanger(&g_rxBuffer[AUDIO_BLOCK_SIZE], &g_txBuffer[AUDIO_BLOCK_SIZE]);
+        processAudioTremolo(&g_rxBuffer[AUDIO_BLOCK_SIZE], &g_txBuffer[AUDIO_BLOCK_SIZE]);
+        //processAudioReverb(&g_rxBuffer[AUDIO_BLOCK_SIZE], &g_txBuffer[AUDIO_BLOCK_SIZE]);
+
+        dmaPingPongFlag = 0; // Na próxima interrupção, processar o PING
+    }
 }
 
 
@@ -382,6 +402,7 @@ interrupt void dmaTxIsr(void)
     // Não faz nada
 }
 
+// (Funções de inicialização não precisam de alteração)
 void initLFO(void)
 {
     int i;
