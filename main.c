@@ -15,6 +15,7 @@ void checkSwitch(void);
 extern void initPLL(void);
 extern void initAIC3204( );
 extern Int16 oled_start( );
+extern void oled_updateEffectName(Uint8 state);
 
 extern Uint16 timerFlag;
 Uint8 ledNum = 3;
@@ -44,8 +45,9 @@ void main(void)
     /* Start Demo */
     startAudioDma ( );
     EZDSP5502_MCBSP_init( );
-    //startTimer0( );
-    //oled_start( );
+
+    oled_start( );
+    oled_updateEffectName(currentState);
     
     while(1)
     {
@@ -100,6 +102,7 @@ void checkSwitch(void)
             {
                 currentState = 2; // (Faz loop 0 -> 2)
             }
+            oled_updateEffectName(currentState);
         }
     }
     else // SW1 NÃO está premido
@@ -123,6 +126,7 @@ void checkSwitch(void)
             {
                 currentState = 0; // (Faz loop 2 -> 0)
             }
+            oled_updateEffectName(currentState);
         }
     }
     else // SW2 NÃO está premido

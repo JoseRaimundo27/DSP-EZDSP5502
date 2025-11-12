@@ -12,7 +12,8 @@ S55_SRCS += \
 C_SRCS += \
 ../aic3204.c \
 ../dma.c \
-../main.c 
+../main.c \
+../oled.c 
 
 S55_DEPS += \
 ./vectors_dma4.d 
@@ -20,18 +21,21 @@ S55_DEPS += \
 C_DEPS += \
 ./aic3204.d \
 ./dma.d \
-./main.d 
+./main.d \
+./oled.d 
 
 OBJS += \
 ./aic3204.obj \
 ./dma.obj \
 ./main.obj \
+./oled.obj \
 ./vectors_dma4.obj 
 
 OBJS__QUOTED += \
 "aic3204.obj" \
 "dma.obj" \
 "main.obj" \
+"oled.obj" \
 "vectors_dma4.obj" 
 
 S55_DEPS__QUOTED += \
@@ -40,12 +44,14 @@ S55_DEPS__QUOTED += \
 C_DEPS__QUOTED += \
 "aic3204.d" \
 "dma.d" \
-"main.d" 
+"main.d" \
+"oled.d" 
 
 C_SRCS__QUOTED += \
 "../aic3204.c" \
 "../dma.c" \
-"../main.c" 
+"../main.c" \
+"../oled.c" 
 
 S55_SRCS__QUOTED += \
 "../vectors_dma4.s55" 
