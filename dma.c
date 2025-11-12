@@ -17,6 +17,11 @@
 #define FS 48000
 #define PI 3.14159265359
 
+// =================== VARIÁVEIS EXTERNA ===================
+extern volatile Uint8 currentState;
+// Flag para controlar qual bloco (Ping ou Pong) está ativo
+static volatile Uint16 dmaPingPongFlag = 0;
+// =====================================
 //---------------   VARIÁVEIS PARA OS BUFFERS DE ENTRADA E SAIDA     -------------------------
 #pragma DATA_SECTION(g_rxBuffer, "dmaMem")
 #pragma DATA_ALIGN(g_rxBuffer, 4096)
@@ -60,8 +65,7 @@ void processAudioFlanger(Uint16* rxBlock, Uint16* txBlock);
 void processAudioTremolo(Uint16* rxBlock, Uint16* txBlock);
 void processAudioReverb(Uint16* rxBlock, Uint16* txBlock);
 
-// Flag para controlar qual bloco (Ping ou Pong) está ativo
-static volatile Uint16 dmaPingPongFlag = 0;
+
 // =========================================================
 
 
@@ -202,17 +206,14 @@ void configAudioDma (void)
     IRQ_plug(xmtEventId, &dmaTxIsr);
 
     IRQ_enable(rcvEventId); // (Ligar APENAS a interrupção de Rx)
-
-    
     IRQ_globalEnable();
 }
 
 void startAudioDma (void)
 {
-    // =================== ALTERAÇÃO PING-PONG ===================
     // Resetar o flag antes de começar
     dmaPingPongFlag = 0;
-    // =========================================================
+
 
     DMA_start(dmaRxHandle);
     DMA_start(dmaTxHandle);
@@ -226,15 +227,6 @@ void stopAudioDma (void)
 }
 
 
-void changeTone (void)
-{
-    // Não fazer nada.
-}
-
-// =================== ALTERAÇÃO PING-PONG ===================
-// Função MODIFICADA
-// Agora processa apenas um BLOCO (Ping ou Pong)
-// =========================================================
 void processAudioFlanger(Uint16* rxBlock, Uint16* txBlock)
 {
     int i;
@@ -372,27 +364,43 @@ void processAudioReverb(Uint16* rxBlock, Uint16* txBlock)
 
 interrupt void dmaRxIsr(void)
 {
+    Uint16* pRx; // Ponteiro para o bloco de Rx
+    Uint16* pTx; // Ponteiro para o bloco de Tx
+
     if (dmaPingPongFlag == 0)
     {
-        // --- Processar Bloco PING ---
-
-        // Chamar a função de processamento para o Bloco PING
-        //processAudioFlanger(&g_rxBuffer[0], &g_txBuffer[0]);
-        processAudioTremolo(&g_rxBuffer[0], &g_txBuffer[0]);
-        //processAudioReverb(&g_rxBuffer[0], &g_txBuffer[0]);
-
-        dmaPingPongFlag = 1; // Na próxima interrupção, processar o PONG
+        // --- Bloco PING ---
+        pRx = &g_rxBuffer[0];
+        pTx = &g_txBuffer[0];
+        dmaPingPongFlag = 1; // Próxima interrupção será o Pong
     }
     else
     {
-        // --- Processar Bloco PONG ---
+        // --- Bloco PONG ---
+        pRx = &g_rxBuffer[AUDIO_BLOCK_SIZE];
+        pTx = &g_txBuffer[AUDIO_BLOCK_SIZE];
+        dmaPingPongFlag = 0; // Próxima interrupção será o Ping
+    }
 
-        // Chamar a função de processamento para o Bloco PONG
-        //processAudioFlanger(&g_rxBuffer[AUDIO_BLOCK_SIZE], &g_txBuffer[AUDIO_BLOCK_SIZE]);
-        processAudioTremolo(&g_rxBuffer[AUDIO_BLOCK_SIZE], &g_txBuffer[AUDIO_BLOCK_SIZE]);
-        //processAudioReverb(&g_rxBuffer[AUDIO_BLOCK_SIZE], &g_txBuffer[AUDIO_BLOCK_SIZE]);
+    // --- SELETOR DE EFEITO ---
 
-        dmaPingPongFlag = 0; // Na próxima interrupção, processar o PING
+    switch (currentState)
+    {
+        case 0: // Flanger
+            processAudioFlanger(pRx, pTx);
+            break;
+
+        case 1: // Tremolo
+            processAudioTremolo(pRx, pTx);
+            break;
+
+        case 2: // Reverb
+            processAudioReverb(pRx, pTx);
+            break;
+
+        default: // Segurança (caso currentState seja corrompido)
+            processAudioFlanger(pRx, pTx); // Default para Flanger
+            break;
     }
 }
 
