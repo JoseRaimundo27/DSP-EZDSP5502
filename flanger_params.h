@@ -15,12 +15,12 @@
 //--------------- PARÂMETROS DO EFEITO FLANGER --------------------
 // (Atraso Médio (12.5ms @ 48kHz - igual a 100 @ 8kHz))
 #define FLANGER_L0    600 // 600
-// (Variação (50% de L0 - igual a A_maxSwing = 0.5))
+// (Variação da oscilação (50% de L0 - igual a A_maxSwing = 0.5))
 #define FLANGER_A     300 // 300
 // (Profundidade (1.0 em Q15 - G_depth = 1.0))
 #define FLANGER_g     32767   //16384 ou 32767
 // (Velocidade do LFO (0.2 Hz))
-#define FLANGER_fr    0.05
+#define FLANGER_fr    0.2
 
 
 //--------------- PARÂMETROS DOS BUFFERS --------------------------
