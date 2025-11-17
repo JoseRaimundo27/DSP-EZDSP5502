@@ -61,6 +61,7 @@ interrupt void dmaTxIsr(void);
 
 
 // As funcoes aceitam ponteiros para os blocos de áudio (pingpong)
+void processAudioLoopback(Uint16* rxBlock, Uint16* txBlock);
 void processAudioFlanger(Uint16* rxBlock, Uint16* txBlock);
 void processAudioTremolo(Uint16* rxBlock, Uint16* txBlock);
 void processAudioReverb(Uint16* rxBlock, Uint16* txBlock);
@@ -226,46 +227,61 @@ void stopAudioDma (void)
     DMA_stop(dmaTxHandle);
 }
 
+void processAudioLoopback(Uint16* rxBlock, Uint16* txBlock)
+{
+    int i;
+
+    // Itera sobre todas as amostras do bloco atual
+    for (i = 0; i < AUDIO_BLOCK_SIZE; i++)
+    {
+        // Copia diretamente o valor da entrada para a saída
+        txBlock[i] = rxBlock[i];
+    }
+}
 
 void processAudioFlanger(Uint16* rxBlock, Uint16* txBlock)
 {
     int i;
-    Int32 lfoSin_Q15;
-    Int32 currentDelay_L;
-    Int16 y_n, x_n, x_n_L;
+    Int32 lfoSin_Q15;     // Valor do LFO, o M(n) da Eq. 10.34
+    Int32 currentDelay_L; // O atraso final L(n) em amostras
+    Int16 y_n, x_n, x_n_L;  // y(n), x(n), e x[n-L(n)]
     Uint16 readIndex;
 
-    // O loop agora itera apenas sobre o BLOCO (metade do buffer)
     for (i = 0; i < AUDIO_BLOCK_SIZE; i++)
-    {
-        /* --- 1. Calcular o Atraso L(n) (Ponto Fixo) --- */
+    {     
+        // lfoSin_Q15 = M(n), o valor do oscilador
         lfoSin_Q15 = (Int32)g_lfoTable[g_lfoIndex];
 
-        // (Avançar o ponteiro do LFO)
-        // (NOTA: A velocidade do LFO será o dobro se AUDIO_BLOCK_SIZE
-        //  for usado aqui. Mantemos o incremento original
-        //  baseado em AUDIO_BUFFER_SIZE para manter a freq. correta)
+        // (Avançar o ponteiro do LFO para o próximo M(n+1))
         g_lfoIndex = (Uint16)(g_lfoIndex + (g_lfoPhaseInc * AUDIO_BUFFER_SIZE)) % LFO_SIZE;
 
+        // Calcula L(n) = L0 + (A_samples * M(n))
+        // FLANGER_L0 é o L0 (atraso médio)
+        // FLANGER_A é a amplitude em amostras (A_samples)
         currentDelay_L = FLANGER_L0 + ((FLANGER_A * lfoSin_Q15) >> 16);
 
         /* --- 2. Ler a Amostra Atrasada x[n - L(n)] --- */
+        
+        // Encontra o índice de leitura no buffer circular
         readIndex = (g_flangerWriteIndex - (int)currentDelay_L) & FLANGER_DELAY_MASK;
+        
+        // x_n_L é a amostra atrasada x[n - L(n)]
         x_n_L = g_flangerBuffer[readIndex];
 
-        /* --- 3. Aplicar a Equação 10.33 (Ponto Fixo) --- */
+        /* --- 3. Aplicar a Equação 10.33 (Modificada) --- */
 
-        // (Ler do BLOCO de entrada, não do buffer global)
+        // x_n é a amostra de entrada "seca" x(n)
         x_n = rxBlock[i];
 
+        // y(n) = (0.5 * x(n)) + (g * x[n - L(n),(x_n >> 1) --> Corresponde a 0.5 * x(n)
+        // (FLANGER_g * x_n_L) >> 16 --> Corresponde a g * x[n - L(n)]
+        // pequena modificação: o sinal "seco" (x_n) é atenuado 
+        // pela metade (>> 1) para evitar clipping.
         y_n = (x_n >> 1) + (Int16)(((Int32)FLANGER_g * (Int32)x_n_L) >> 16);
 
-        /* --- 4. Escrever de volta e Salvar --- */
-
-        // (Escrever no BLOCO de saída, não no buffer global)
+        // Escreve a saída final y(n)
         txBlock[i] = y_n;
 
-        // (Guardar o áudio "seco" no buffer de atraso para o futuro)
         g_flangerBuffer[g_flangerWriteIndex] = x_n;
 
         // (Avançar o "ponteiro" de escrita do buffer circular)
@@ -274,89 +290,97 @@ void processAudioFlanger(Uint16* rxBlock, Uint16* txBlock)
 }
 
 
-// Agora processa apenas um BLOCO (Ping ou Pong)
 void processAudioTremolo(Uint16* rxBlock, Uint16* txBlock)
 {
     int i;
-    Int16 x_n, y_n;
-    Int32 lfo_val_Q15;
-    Int32 m_Q15;
-    Int32 env_Q15;
-    Int32 x_n_scaled;
+    Int16 x_n, y_n;      // x_n é a entrada x(n), y_n é a saída y(n)
+    Int32 lfo_val_Q15; // Representa M(n), o valor do oscilador
+    Int32 m_Q15;       // Termo intermediário: A * M(n)
+    Int32 env_Q15;     // O envelope [Offset + A*M(n)]
+    Int32 x_n_scaled;  // A entrada x(n) *com* um ganho (desvio da fórmula)
 
     // O loop agora itera apenas sobre o BLOCO (metade do buffer)
     for (i = 0; i < AUDIO_BLOCK_SIZE; i++)
-    {
-        /* --- 1. Obter Amostra "Seca" e aplicar ganho --- */
-
-        // (Ler do BLOCO de entrada, não do buffer global)
+    {        
+        // x_n é a amostra de entrada original, o x(n) da fórmula
         x_n = rxBlock[i];
+
+        // O código aplica um ganho de entrada (InputGain) antes.
+        // x_n_scaled = InputGain * x(n) mas definimos o inputGain como 1, não faz diferença
         x_n_scaled = ((Int32)x_n * (Int32)TREMOLO_INPUT_GAIN_Q15) >> 15;
 
-        /* --- 2. Obter valor do LFO (Bipolar Q15: -1.0 a +1.0) --- */
+
+        // lfo_val_Q15 é o M(n) da fórmula: o valor atual do LFO
         lfo_val_Q15 = (Int32)g_lfoTable[g_lfoIndex];
 
-        // (Avançar o ponteiro do LFO)
-        // (Ver nota no Flanger: mantemos o incremento original)
+        // (Avançar o ponteiro do LFO para a próxima amostra, M(n+1))
         g_lfoIndex = (Uint16)(g_lfoIndex + (g_lfoPhaseInc * AUDIO_BUFFER_SIZE)) % LFO_SIZE;
 
-        /* --- 3. Calcular Envelope de Modulação (Q15) --- */
+        /* Calcular Envelope de Modulação [Offset + A*M(n)] --- */
+        // m_Q15 = A * M(n)
+        // 'A' (Amplitude/Depth) é TREMOLO_DEPTH_Q15
+        // 'M(n)' (Oscilador) é lfo_val_Q15
         m_Q15 = ((Int32)lfo_val_Q15 * (Int32)TREMOLO_DEPTH_Q15) >> 15;
+
+        // env_Q15 = [Offset + A*M(n)]
+        // TREMOLO_OFFSET_Q15 tambem vale 1
         env_Q15 = m_Q15 + (Int32)TREMOLO_OFFSET_Q15;
         
-        /* --- 4. Aplicar Envelope (Saída = Envelope * Amostra) --- */
+        /* (Saída = Envelope * Amostra) --- */
+        // y_n = env_Q15 * x_n_scaled
+        // Fórmula final do CÓDIGO:
+        // y(n) = [1 + A*M(n)] * [1 * x(n)]
         y_n = (Int16)( ((Int32)env_Q15 * x_n_scaled) >> 15 );
-
-
-        /* --- 5. Escrever de volta --- */
         
         // (Escrever no BLOCO de saída, não no buffer global)
-        txBlock[i] = y_n;
+        txBlock[i] = y_n; // Armazena o y(n) final
     }
 }
 
-// Agora processa apenas um BLOCO (Ping ou Pong)
 void processAudioReverb(Uint16* rxBlock, Uint16* txBlock)
 {
-    int i; // (Índice do bloco DMA)
-    int l; // (Índice da Resposta ao Impulso h(l))
-
-    Int16 x_n, y_n;
-    Int32 y_n_32; // (Acumulador de 32 bits para a soma)
+    int i; 
+    int l; // (Índice da Resposta ao Impulso h(l)) - Representa 'l'
+    Int16 x_n, y_n; // x_n é x(n), y_n é y(n)
+    Int32 y_n_32; // Acumulador para o Somatório (Σ)
     Uint16 readIndex;
     Int16 x_n_l; // Amostra atrasada x(n-l)
     Int16 h_l;   // Coeficiente h(l)
 
-    // O loop agora itera apenas sobre o BLOCO (metade do buffer)
     for (i = 0; i < AUDIO_BLOCK_SIZE; i++)
     {
-        /* --- 1. Obter amostra e guardar no buffer de atraso --- */
-
-        // (Ler do BLOCO de entrada, não do buffer global)
+        // x_n = x(n)
         x_n = rxBlock[i];
+        // Guarda x(n) no buffer circular (delay line)
         g_reverbBuffer[g_reverbWriteIndex] = x_n;
 
-        /* --- 2. Calcular a Convolução (Eq 10.25) --- */
-        y_n_32 = 0; // Resetar o acumulador
+        // Inicia o acumulador do Somatório (Σ) em zero
+        y_n_32 = 0; 
 
-        // (Loop interno para y(n) = SOMA( h(l) * x(n-l) ))
+        // Este loop 'l' implementa o Somatório: Σ de l=0 até L-1
+        // (REVERB_IR_SIZE é o 'L' da fórmula)
         for (l = 0; l < REVERB_IR_SIZE; l++)
         {
+            // h_l = h(l)
+            // Pega o coeficiente da Resposta ao Impulso
             h_l = g_reverbIR[l];
+
+            // Encontra a posição de x(n-l) no buffer circular
             readIndex = (g_reverbWriteIndex - l) & REVERB_DELAY_MASK;
+            // x_n_l = x(n-l)
             x_n_l = g_reverbBuffer[readIndex];
 
+            // Implementa a multiplicação e soma: h(l) * x(n-l)
             y_n_32 += (Int32)h_l * (Int32)x_n_l;
         }
 
-        /* --- 3. Escalar e escrever a saída --- */
+        /* Escalar e escrever a saída y(n) --- */
         y_n = (Int16)(y_n_32 >> 15);
 
         // (Escrever no BLOCO de saída, não no buffer global)
         txBlock[i] = y_n;
 
-
-        /* --- 4. Avançar o ponteiro de escrita --- */
+        // Avança o ponteiro 'n' para 'n+1' no buffer circular
         g_reverbWriteIndex = (g_reverbWriteIndex + 1) & REVERB_DELAY_MASK;
     }
 }
@@ -386,20 +410,23 @@ interrupt void dmaRxIsr(void)
 
     switch (currentState)
     {
-        case 0: // Flanger
+        case 0:
+            processAudioLoopback(pRx,pTx);
+            break;
+        case 1: // Flanger
             processAudioFlanger(pRx, pTx);
             break;
 
-        case 1: // Tremolo
+        case 2: // Tremolo
             processAudioTremolo(pRx, pTx);
             break;
 
-        case 2: // Reverb
+        case 3: // Reverb
             processAudioReverb(pRx, pTx);
             break;
 
         default: // Segurança (caso currentState seja corrompido)
-            processAudioFlanger(pRx, pTx); // Default para Flanger
+            processAudioLoopback(pRx, pTx); // Default para Loopback
             break;
     }
 }
