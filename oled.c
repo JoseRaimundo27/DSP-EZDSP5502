@@ -113,7 +113,12 @@ void oled_updateEffectName(Uint8 state)
     /* 4. Escreve o nome do efeito */
     switch(state)
     {
-        case 0: // FLANGER
+        case 0: //Loopback
+            printLetter(0x7F,0x49,0x49,0x36);  // B (Aprox.)
+            printLetter(0x3E,0x41,0x41,0x3E);  // O
+            printLetter(0x3E,0x41,0x41,0x3E);  // O
+            printLetter(0x00,0x00,0x7F,0x00);  // L (Aprox.)
+        case 1: // FLANGER
             printLetter(0x46,0x29,0x19,0x7F);  // R
             printLetter(0x41,0x49,0x49,0x7F);  // E
             printLetter(0x7F,0x41,0x41,0x22);  // G (Aprox.)
@@ -123,7 +128,7 @@ void oled_updateEffectName(Uint8 state)
             printLetter(0x01,0x09,0x7F,0x01);  // F
             break;
 
-        case 1: // TREMOLO
+        case 2: // TREMOLO
             printLetter(0x3E,0x41,0x41,0x3E);  // O
             printLetter(0x00,0x00,0x7F,0x00);  // L (Aprox.)
             printLetter(0x3E,0x41,0x41,0x3E);  // O
@@ -134,7 +139,7 @@ void oled_updateEffectName(Uint8 state)
 
             break;
 
-        case 2: // REVERB
+        case 3: // REVERB
             printLetter(0x7F,0x49,0x49,0x36);  // B (Aprox.)
             printLetter(0x46,0x29,0x19,0x7F);  // R
             printLetter(0x41,0x49,0x49,0x7F);  // E

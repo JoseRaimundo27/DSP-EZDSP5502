@@ -6,7 +6,6 @@
 
 //--------------- PARÂMETROS DO EFEITO REVERB (FIR) ------------------
 // (Tamanho da nossa Resposta ao Impulso h(l))
-// (Valores maiores são mais realistas, mas MUITO mais lentos)
 #define REVERB_IR_SIZE 50 //16
 
 // (O nosso buffer de atraso precisa ser pelo menos deste tamanho)

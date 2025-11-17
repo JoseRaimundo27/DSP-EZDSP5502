@@ -226,6 +226,17 @@ void stopAudioDma (void)
     DMA_stop(dmaTxHandle);
 }
 
+void processAudioLoopback(Uint16* rxBlock, Uint16* txBlock)
+{
+    int i;
+
+    // Itera sobre todas as amostras do bloco atual
+    for (i = 0; i < AUDIO_BLOCK_SIZE; i++)
+    {
+        // Copia diretamente o valor da entrada para a saída
+        txBlock[i] = rxBlock[i];
+    }
+}
 
 void processAudioFlanger(Uint16* rxBlock, Uint16* txBlock)
 {
@@ -399,20 +410,23 @@ interrupt void dmaRxIsr(void)
 
     switch (currentState)
     {
-        case 0: // Flanger
+        case 0:
+            processAudioLoopback(pRx,pTx);
+            break;
+        case 1: // Flanger
             processAudioFlanger(pRx, pTx);
             break;
 
-        case 1: // Tremolo
+        case 2: // Tremolo
             processAudioTremolo(pRx, pTx);
             break;
 
-        case 2: // Reverb
+        case 3: // Reverb
             processAudioReverb(pRx, pTx);
             break;
 
         default: // Segurança (caso currentState seja corrompido)
-            processAudioFlanger(pRx, pTx); // Default para Flanger
+            processAudioLoopback(pRx, pTx); // Default para Loopback
             break;
     }
 }
