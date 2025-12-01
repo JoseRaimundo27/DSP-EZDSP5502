@@ -41,6 +41,20 @@ Int16 g_lfoTable[LFO_SIZE];
 volatile Uint16 g_lfoIndex = 0; 
 float g_lfoPhaseInc = (LFO_SIZE * FLANGER_fr) / (float)FS; // (Calculado 1 vez)
 
+// ================= VARIÁVEIS DO REVERB SCHROEDER =================
+
+// Buffer Gigante (Pool de Memória)
+#pragma DATA_SECTION(g_reverbMemory, "dmaMem") // Ou onde você guarda seus buffers
+Int16 g_reverbMemory[REVERB_MEM_SIZE];
+
+// Ponteiros para o inicio de cada buffer dentro do Pool
+Int16 *pC1, *pC2, *pC3, *pC4;
+Int16 *pAP1, *pAP2;
+
+// Índices atuais (Cabeçotes de Leitura/Escrita)
+int idxC1 = 0, idxC2 = 0, idxC3 = 0, idxC4 = 0;
+int idxAP1 = 0, idxAP2 = 0;
+
 
 //--------------- VARIÁVEIS PARA O REVERB (FIR) -------------------------
 // (Buffer de Atraso para x(n-l))
@@ -339,50 +353,97 @@ void processAudioTremolo(Uint16* rxBlock, Uint16* txBlock)
 
 void processAudioReverb(Uint16* rxBlock, Uint16* txBlock)
 {
-    int i; 
-    int l; // (Índice da Resposta ao Impulso h(l)) - Representa 'l'
-    Int16 x_n, y_n; // x_n é x(n), y_n é y(n)
-    Int32 y_n_32; // Acumulador para o Somatório (Σ)
-    Uint16 readIndex;
-    Int16 x_n_l; // Amostra atrasada x(n-l)
-    Int16 h_l;   // Coeficiente h(l)
+    int i;
+        Int16 x_n, y_n;
 
-    for (i = 0; i < AUDIO_BLOCK_SIZE; i++)
-    {
-        // x_n = x(n)
-        x_n = rxBlock[i];
-        // Guarda x(n) no buffer circular (delay line)
-        g_reverbBuffer[g_reverbWriteIndex] = x_n;
+        // Variáveis temporárias
+        Int16 combOut1, combOut2, combOut3, combOut4;
+        Int16 sumCombs;
+        Int16 ap1_in, ap1_out, ap1_bufferVal;
+        Int16 ap2_in, ap2_out, ap2_bufferVal;
+        Int32 tempCalc; // Para contas de 32 bits
 
-        // Inicia o acumulador do Somatório (Σ) em zero
-        y_n_32 = 0; 
-
-        // Este loop 'l' implementa o Somatório: Σ de l=0 até L-1
-        // (REVERB_IR_SIZE é o 'L' da fórmula)
-        for (l = 0; l < REVERB_IR_SIZE; l++)
+        for (i = 0; i < AUDIO_BLOCK_SIZE; i++)
         {
-            // h_l = h(l)
-            // Pega o coeficiente da Resposta ao Impulso
-            h_l = g_reverbIR[l];
+            x_n = rxBlock[i];
 
-            // Encontra a posição de x(n-l) no buffer circular
-            readIndex = (g_reverbWriteIndex - l) & REVERB_DELAY_MASK;
-            // x_n_l = x(n-l)
-            x_n_l = g_reverbBuffer[readIndex];
+            // --- ESTÁGIO 1: 4 FILTROS PENTE EM PARALELO ---
+            // Input: x_n reduzido (>>2) para evitar overflow na soma
 
-            // Implementa a multiplicação e soma: h(l) * x(n-l)
-            y_n_32 += (Int32)h_l * (Int32)x_n_l;
+            // Comb 1
+            Int16 buffVal1 = pC1[idxC1];
+            combOut1 = buffVal1; // A saída é o que estava no buffer
+            // Feedback: Buffer = Input + (Output * Gain)
+            tempCalc = (Int32)(x_n >> 2) + (((Int32)buffVal1 * COMB_GAIN) >> 15);
+            pC1[idxC1] = (Int16)tempCalc;
+            // Avançar índice circular
+            if (++idxC1 >= C1_LEN) idxC1 = 0;
+
+            // Comb 2
+            Int16 buffVal2 = pC2[idxC2];
+            combOut2 = buffVal2;
+            tempCalc = (Int32)(x_n >> 2) + (((Int32)buffVal2 * COMB_GAIN) >> 15);
+            pC2[idxC2] = (Int16)tempCalc;
+            if (++idxC2 >= C2_LEN) idxC2 = 0;
+
+            // Comb 3
+            Int16 buffVal3 = pC3[idxC3];
+            combOut3 = buffVal3;
+            tempCalc = (Int32)(x_n >> 2) + (((Int32)buffVal3 * COMB_GAIN) >> 15);
+            pC3[idxC3] = (Int16)tempCalc;
+            if (++idxC3 >= C3_LEN) idxC3 = 0;
+
+            // Comb 4
+            Int16 buffVal4 = pC4[idxC4];
+            combOut4 = buffVal4;
+            tempCalc = (Int32)(x_n >> 2) + (((Int32)buffVal4 * COMB_GAIN) >> 15);
+            pC4[idxC4] = (Int16)tempCalc;
+            if (++idxC4 >= C4_LEN) idxC4 = 0;
+
+
+            // --- ESTÁGIO 2: SOMA ---
+            // Somar as 4 saídas
+            sumCombs = combOut1 + combOut2 + combOut3 + combOut4;
+
+
+            // --- ESTÁGIO 3: FILTRO ALL-PASS 1 ---
+            // Input = sumCombs
+            ap1_in = sumCombs;
+            ap1_bufferVal = pAP1[idxAP1];
+
+            // Equação All-Pass (Schroeder):
+            // Output = -Gain*Input + Buffer
+            // Buffer_New = Input + Gain*Buffer
+
+            // 1. Calcular Buffer Novo
+            tempCalc = (Int32)ap1_in + (((Int32)ap1_bufferVal * AP_GAIN) >> 15);
+            pAP1[idxAP1] = (Int16)tempCalc; // Grava no delay
+
+            // 2. Calcular Saída
+            // Output = Buffer_Old - (Gain * Input)  <-- Forma canônica mais segura
+            ap1_out = ap1_bufferVal - (Int16)(((Int32)ap1_in * AP_GAIN) >> 15);
+
+            if (++idxAP1 >= AP1_LEN) idxAP1 = 0;
+
+
+            // --- ESTÁGIO 4: FILTRO ALL-PASS 2 ---
+            // Input = ap1_out
+            ap2_in = ap1_out;
+            ap2_bufferVal = pAP2[idxAP2];
+
+            // Mesmo processo do AP1
+            tempCalc = (Int32)ap2_in + (((Int32)ap2_bufferVal * AP_GAIN) >> 15);
+            pAP2[idxAP2] = (Int16)tempCalc;
+
+            ap2_out = ap2_bufferVal - (Int16)(((Int32)ap2_in * AP_GAIN) >> 15);
+
+            if (++idxAP2 >= AP2_LEN) idxAP2 = 0;
+
+
+            // --- SAÍDA FINAL ---
+            y_n = ap2_out;
+            txBlock[i] = y_n;
         }
-
-        /* Escalar e escrever a saída y(n) --- */
-        y_n = (Int16)(y_n_32 >> 15);
-
-        // (Escrever no BLOCO de saída, não no buffer global)
-        txBlock[i] = y_n;
-
-        // Avança o ponteiro 'n' para 'n+1' no buffer circular
-        g_reverbWriteIndex = (g_reverbWriteIndex + 1) & REVERB_DELAY_MASK;
-    }
 }
 
 
@@ -453,24 +514,22 @@ void initLFO(void)
 void initReverb(void)
 {
     int i;
+        // 1. Limpar memória
+        for(i=0; i<REVERB_MEM_SIZE; i++) g_reverbMemory[i] = 0;
 
-    // 1. Zerar todo o buffer
-    for (i = 0; i < REVERB_IR_SIZE; i++) {
-        g_reverbIR[i] = 0;
-    }
+        // 2. Configurar os ponteiros (Mapeamento de Memória)
+        // Cada ponteiro começa onde o anterior terminou
+        pC1 = &g_reverbMemory[0];
+        pC2 = &g_reverbMemory[C1_LEN];
+        pC3 = &g_reverbMemory[C1_LEN + C2_LEN];
+        pC4 = &g_reverbMemory[C1_LEN + C2_LEN + C3_LEN];
 
-    // 2. Criar h(l) - (Valores Q15)
-    // (Som Direto)
-    g_reverbIR[0] = 16384; // 0.5 (Som seco)
+        pAP1 = &g_reverbMemory[C1_LEN + C2_LEN + C3_LEN + C4_LEN];
+        pAP2 = &g_reverbMemory[C1_LEN + C2_LEN + C3_LEN + C4_LEN + AP1_LEN];
 
-    // (Reflexões Iniciais - alguns ecos fortes)
-    g_reverbIR[4] = 8192; // 0.25
-    g_reverbIR[7] = 6144; // ~0.18
-
-    // (Reverberação Tardia - ecos mais fracos e próximos)
-    g_reverbIR[11] = 2048; // ~0.06
-    g_reverbIR[13] = 1024; // ~0.03
-    g_reverbIR[15] = 512;  // ~0.01
+        // 3. Zerar índices
+        idxC1 = 0; idxC2 = 0; idxC3 = 0; idxC4 = 0;
+        idxAP1 = 0; idxAP2 = 0;
 }
 
 void initAlgorithms(void) {

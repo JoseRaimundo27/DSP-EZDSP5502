@@ -6,7 +6,7 @@ dma.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5
 dma.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/_csl.h
 dma.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_chiphal.h
 dma.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_std.h
-dma.obj: /home/caco/workspace_v12/aic3204_dma_flanger/include/tistdtypes.h
+dma.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/DSP-EZDSP5502/include/tistdtypes.h
 dma.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_stdhal.h
 dma.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_datasz.h
 dma.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_chipdat.h
@@ -40,7 +40,7 @@ dma.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5
 dma.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_irqhal.h
 dma.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_err.h
 dma.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/include/ezdsp5502_mcbsp.h
-dma.obj: /home/caco/workspace_v12/aic3204_dma_flanger/include/csl_dma.h
+dma.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/DSP-EZDSP5502/include/csl_dma.h
 dma.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_dmahal.h
 dma.obj: /home/caco/ti/ccs1281/ccs/tools/compiler/c5500_4.4.1/include/math.h
 dma.obj: /home/caco/ti/ccs1281/ccs/tools/compiler/c5500_4.4.1/include/float.h
@@ -49,7 +49,7 @@ dma.obj: /home/caco/ti/ccs1281/ccs/tools/compiler/c5500_4.4.1/include/elfnames.h
 dma.obj: /home/caco/ti/ccs1281/ccs/tools/compiler/c5500_4.4.1/include/mathf.h
 dma.obj: /home/caco/ti/ccs1281/ccs/tools/compiler/c5500_4.4.1/include/mathl.h
 dma.obj: /home/caco/ti/ccs1281/ccs/tools/compiler/c5500_4.4.1/include/unaccess.h
-dma.obj: /home/caco/workspace_v12/aic3204_dma_flanger/include/icomplex.h
+dma.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/DSP-EZDSP5502/include/icomplex.h
 dma.obj: ../flanger_params.h
 dma.obj: ../tremolo_params.h
 dma.obj: ../reverb_params.h
@@ -66,7 +66,7 @@ dma.obj: ../reverb_params.h
 
 /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_std.h:
 
-/home/caco/workspace_v12/aic3204_dma_flanger/include/tistdtypes.h:
+/home/caco/Área\ de\ trabalho/EngComp/LABIII/DSP-EZDSP5502/include/tistdtypes.h:
 
 /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_stdhal.h:
 
@@ -134,7 +134,7 @@ dma.obj: ../reverb_params.h
 
 /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/include/ezdsp5502_mcbsp.h:
 
-/home/caco/workspace_v12/aic3204_dma_flanger/include/csl_dma.h:
+/home/caco/Área\ de\ trabalho/EngComp/LABIII/DSP-EZDSP5502/include/csl_dma.h:
 
 /home/caco/Área\ de\ trabalho/EngComp/LABIII/ezdsp5502_BSL_RevC/ezdsp5502_v1/C55xxCSL/include/csl_dmahal.h:
 
@@ -152,7 +152,7 @@ dma.obj: ../reverb_params.h
 
 /home/caco/ti/ccs1281/ccs/tools/compiler/c5500_4.4.1/include/unaccess.h:
 
-/home/caco/workspace_v12/aic3204_dma_flanger/include/icomplex.h:
+/home/caco/Área\ de\ trabalho/EngComp/LABIII/DSP-EZDSP5502/include/icomplex.h:
 
 ../flanger_params.h:
 
