@@ -56,18 +56,6 @@ int idxC1 = 0, idxC2 = 0, idxC3 = 0, idxC4 = 0;
 int idxAP1 = 0, idxAP2 = 0;
 
 
-//--------------- VARIÁVEIS PARA O REVERB (FIR) -------------------------
-// (Buffer de Atraso para x(n-l))
-#pragma DATA_SECTION(g_reverbBuffer, "flangerMem")
-#pragma DATA_ALIGN(g_reverbBuffer, 4)
-Int16 g_reverbBuffer[REVERB_DELAY_SIZE];
-volatile Uint16 g_reverbWriteIndex = 0;
-
-// (Array para a Resposta ao Impulso h(l))
-#pragma DATA_SECTION(g_reverbIR, "flangerMem")
-Int16 g_reverbIR[REVERB_IR_SIZE];
-
-
 //(ISRs):
 extern void VECSTART(void);
 interrupt void dmaRxIsr(void);
@@ -374,7 +362,7 @@ void processAudioReverb(Uint16* rxBlock, Uint16* txBlock)
             Int16 buffVal1 = pC1[idxC1];
             combOut1 = buffVal1; // A saída é o que estava no buffer
             // Feedback: Buffer = Input + (Output * Gain)
-            tempCalc = (Int32)(x_n >> 2) + (((Int32)buffVal1 * COMB_GAIN) >> 15);
+            tempCalc = (Int32)(x_n >> 2) + (((Int32)buffVal1 * C1_GAIN) >> 15);
             pC1[idxC1] = (Int16)tempCalc;
             // Avançar índice circular
             if (++idxC1 >= C1_LEN) idxC1 = 0;
@@ -382,21 +370,21 @@ void processAudioReverb(Uint16* rxBlock, Uint16* txBlock)
             // Comb 2
             Int16 buffVal2 = pC2[idxC2];
             combOut2 = buffVal2;
-            tempCalc = (Int32)(x_n >> 2) + (((Int32)buffVal2 * COMB_GAIN) >> 15);
+            tempCalc = (Int32)(x_n >> 2) + (((Int32)buffVal2 * C2_GAIN) >> 15);
             pC2[idxC2] = (Int16)tempCalc;
             if (++idxC2 >= C2_LEN) idxC2 = 0;
 
             // Comb 3
             Int16 buffVal3 = pC3[idxC3];
             combOut3 = buffVal3;
-            tempCalc = (Int32)(x_n >> 2) + (((Int32)buffVal3 * COMB_GAIN) >> 15);
+            tempCalc = (Int32)(x_n >> 2) + (((Int32)buffVal3 * C3_GAIN) >> 15);
             pC3[idxC3] = (Int16)tempCalc;
             if (++idxC3 >= C3_LEN) idxC3 = 0;
 
             // Comb 4
             Int16 buffVal4 = pC4[idxC4];
             combOut4 = buffVal4;
-            tempCalc = (Int32)(x_n >> 2) + (((Int32)buffVal4 * COMB_GAIN) >> 15);
+            tempCalc = (Int32)(x_n >> 2) + (((Int32)buffVal4 * C4_GAIN) >> 15);
             pC4[idxC4] = (Int16)tempCalc;
             if (++idxC4 >= C4_LEN) idxC4 = 0;
 

@@ -4,15 +4,6 @@
 #define __REVERB_PARAMS_H__
 
 
-//--------------- PARÂMETROS DO EFEITO REVERB (FIR) ------------------
-// (Tamanho da nossa Resposta ao Impulso h(l))
-// (Valores maiores são mais realistas, mas MUITO mais lentos)
-#define REVERB_IR_SIZE 50 //16
-
-// (O nosso buffer de atraso precisa ser pelo menos deste tamanho)
-#define REVERB_DELAY_SIZE 1024
-#define REVERB_DELAY_MASK (REVERB_DELAY_SIZE - 1)
-
 // --- BUFFER TOTAL ---
 // Precisamos de um "Pool" de memória. 8192 deve ser suficiente (aprox 170ms total)
 #define REVERB_MEM_SIZE 8192
@@ -31,7 +22,10 @@
 // --- GANHOS (Q15) ---
 // Feedback dos Combs (Controla o tempo de reverberação RT60)
 // 0.8 a 0.85 é um bom valor. (0.84 * 32767 = 27524)
-#define COMB_GAIN 27524
+#define C1_GAIN 27524
+#define C2_GAIN 27524
+#define C3_GAIN 27524
+#define C4_GAIN 27524
 
 // Ganho dos All-Pass (Controla a difusão/densidade)
 // 0.5 a 0.7 é padrão. (0.5 * 32767 = 16384)
