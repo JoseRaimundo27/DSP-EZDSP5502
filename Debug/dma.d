@@ -50,9 +50,9 @@ dma.obj: /home/caco/ti/ccs1281/ccs/tools/compiler/c5500_4.4.1/include/mathf.h
 dma.obj: /home/caco/ti/ccs1281/ccs/tools/compiler/c5500_4.4.1/include/mathl.h
 dma.obj: /home/caco/ti/ccs1281/ccs/tools/compiler/c5500_4.4.1/include/unaccess.h
 dma.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/DSP-EZDSP5502/include/icomplex.h
-dma.obj: ../flanger_params.h
-dma.obj: ../tremolo_params.h
 dma.obj: ../reverb_params.h
+dma.obj: ../phaser_params.h
+dma.obj: ../auto_wah_params.h
 
 ../dma.c:
 
@@ -154,9 +154,9 @@ dma.obj: ../reverb_params.h
 
 /home/caco/Área\ de\ trabalho/EngComp/LABIII/DSP-EZDSP5502/include/icomplex.h:
 
-../flanger_params.h:
-
-../tremolo_params.h:
-
 ../reverb_params.h:
+
+../phaser_params.h:
+
+../auto_wah_params.h:
 

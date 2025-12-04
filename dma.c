@@ -5,10 +5,9 @@
 #include <math.h>
 #include "icomplex.h"
 
-#include "flanger_params.h"
-#include "tremolo_params.h"
 #include "reverb_params.h"
-
+#include "phaser_params.h"
+#include "auto_wah_params.h"
 #define AUDIO_BUFFER_SIZE 4096 // Tamanho TOTAL
 
 // Processar em blocos de 2048 (dois blocos -> DMA PING PONG)
@@ -31,15 +30,6 @@ Uint16 g_rxBuffer[AUDIO_BUFFER_SIZE]; // Onde o "Line In" escreve (BUFFER DE ENT
 #pragma DATA_ALIGN(g_txBuffer, 4096)
 Uint16 g_txBuffer[AUDIO_BUFFER_SIZE]; // De onde o "Headphone" lê (BUFFER DE SAÍDA)
 
-//---------------   VARIÁVEIS PARA O FLANGER     -------------------------
-#pragma DATA_SECTION(g_flangerBuffer, "flangerMem")
-#pragma DATA_ALIGN(g_flangerBuffer, 4)
-Int16 g_flangerBuffer[FLANGER_DELAY_SIZE]; // O nosso buffer circular
-volatile Uint16 g_flangerWriteIndex = 0;  // Onde escrevemos no buffer
-
-Int16 g_lfoTable[LFO_SIZE];
-volatile Uint16 g_lfoIndex = 0; 
-float g_lfoPhaseInc = (LFO_SIZE * FLANGER_fr) / (float)FS; // (Calculado 1 vez)
 
 // ================= VARIÁVEIS DO REVERB SCHROEDER =================
 
@@ -54,6 +44,25 @@ Int16 *pAP1, *pAP2;
 // Índices atuais (Cabeçotes de Leitura/Escrita)
 int idxC1 = 0, idxC2 = 0, idxC3 = 0, idxC4 = 0;
 int idxAP1 = 0, idxAP2 = 0;
+// =========================================================
+//--------------- VARIÁVEIS DO PHASER -------------------------
+#pragma DATA_SECTION(g_phaserXPrev, "phaserMem")
+Int16 g_phaserXPrev[PHASER_NUM_STAGES];
+
+#pragma DATA_SECTION(g_phaserYPrev, "phaserMem")
+Int16 g_phaserYPrev[PHASER_NUM_STAGES];
+
+Int16 g_lfoTable[LFO_SIZE];
+volatile Int16 g_phaserLastOutput = 0;
+volatile Uint16 g_phaserLfoIndex = 0;
+
+//--------------- VARIÁVEIS DO AUTO-WAH -------------------------
+// Estado do Envelope (Volume atual)
+volatile Int16 g_autoWahEnvState = 0;
+
+// Estados do Filtro SVF (State Variable Filter)
+volatile Int16 g_autoWahStateLow = 0;
+volatile Int16 g_autoWahStateBand = 0;
 
 
 //(ISRs):
@@ -64,8 +73,8 @@ interrupt void dmaTxIsr(void);
 
 // As funcoes aceitam ponteiros para os blocos de áudio (pingpong)
 void processAudioLoopback(Uint16* rxBlock, Uint16* txBlock);
-void processAudioFlanger(Uint16* rxBlock, Uint16* txBlock);
-void processAudioTremolo(Uint16* rxBlock, Uint16* txBlock);
+void processAudioPhaser(Uint16* rxBlock, Uint16* txBlock);
+void processAudioAutoWah(Uint16* rxBlock, Uint16* txBlock);
 void processAudioReverb(Uint16* rxBlock, Uint16* txBlock);
 
 
@@ -241,103 +250,6 @@ void processAudioLoopback(Uint16* rxBlock, Uint16* txBlock)
     }
 }
 
-void processAudioFlanger(Uint16* rxBlock, Uint16* txBlock)
-{
-    int i;
-    Int32 lfoSin_Q15;     // Valor do LFO, o M(n) da Eq. 10.34
-    Int32 currentDelay_L; // O atraso final L(n) em amostras
-    Int16 y_n, x_n, x_n_L;  // y(n), x(n), e x[n-L(n)]
-    Uint16 readIndex;
-
-    for (i = 0; i < AUDIO_BLOCK_SIZE; i++)
-    {     
-        // lfoSin_Q15 = M(n), o valor do oscilador
-        lfoSin_Q15 = (Int32)g_lfoTable[g_lfoIndex];
-
-        // (Avançar o ponteiro do LFO para o próximo M(n+1))
-        g_lfoIndex = (Uint16)(g_lfoIndex + (g_lfoPhaseInc * AUDIO_BUFFER_SIZE)) % LFO_SIZE;
-
-        // Calcula L(n) = L0 + (A_samples * M(n))
-        // FLANGER_L0 é o L0 (atraso médio)
-        // FLANGER_A é a amplitude em amostras (A_samples)
-        currentDelay_L = FLANGER_L0 + ((FLANGER_A * lfoSin_Q15) >> 16);
-
-        /* --- 2. Ler a Amostra Atrasada x[n - L(n)] --- */
-        
-        // Encontra o índice de leitura no buffer circular
-        readIndex = (g_flangerWriteIndex - (int)currentDelay_L) & FLANGER_DELAY_MASK;
-        
-        // x_n_L é a amostra atrasada x[n - L(n)]
-        x_n_L = g_flangerBuffer[readIndex];
-
-        /* --- 3. Aplicar a Equação 10.33 (Modificada) --- */
-
-        // x_n é a amostra de entrada "seca" x(n)
-        x_n = rxBlock[i];
-
-        // y(n) = (0.5 * x(n)) + (g * x[n - L(n),(x_n >> 1) --> Corresponde a 0.5 * x(n)
-        // (FLANGER_g * x_n_L) >> 16 --> Corresponde a g * x[n - L(n)]
-        // pequena modificação: o sinal "seco" (x_n) é atenuado 
-        // pela metade (>> 1) para evitar clipping.
-        y_n = (x_n >> 1) + (Int16)(((Int32)FLANGER_g * (Int32)x_n_L) >> 16);
-
-        // Escreve a saída final y(n)
-        txBlock[i] = y_n;
-
-        g_flangerBuffer[g_flangerWriteIndex] = x_n;
-
-        // (Avançar o "ponteiro" de escrita do buffer circular)
-        g_flangerWriteIndex = (g_flangerWriteIndex + 1) & FLANGER_DELAY_MASK;
-    }
-}
-
-
-void processAudioTremolo(Uint16* rxBlock, Uint16* txBlock)
-{
-    int i;
-    Int16 x_n, y_n;      // x_n é a entrada x(n), y_n é a saída y(n)
-    Int32 lfo_val_Q15; // Representa M(n), o valor do oscilador
-    Int32 m_Q15;       // Termo intermediário: A * M(n)
-    Int32 env_Q15;     // O envelope [Offset + A*M(n)]
-    Int32 x_n_scaled;  // A entrada x(n) *com* um ganho (desvio da fórmula)
-
-    // O loop agora itera apenas sobre o BLOCO (metade do buffer)
-    for (i = 0; i < AUDIO_BLOCK_SIZE; i++)
-    {        
-        // x_n é a amostra de entrada original, o x(n) da fórmula
-        x_n = rxBlock[i];
-
-        // O código aplica um ganho de entrada (InputGain) antes.
-        // x_n_scaled = InputGain * x(n) mas definimos o inputGain como 1, não faz diferença
-        x_n_scaled = ((Int32)x_n * (Int32)TREMOLO_INPUT_GAIN_Q15) >> 15;
-
-
-        // lfo_val_Q15 é o M(n) da fórmula: o valor atual do LFO
-        lfo_val_Q15 = (Int32)g_lfoTable[g_lfoIndex];
-
-        // (Avançar o ponteiro do LFO para a próxima amostra, M(n+1))
-        g_lfoIndex = (Uint16)(g_lfoIndex + (g_lfoPhaseInc * AUDIO_BUFFER_SIZE)) % LFO_SIZE;
-
-        /* Calcular Envelope de Modulação [Offset + A*M(n)] --- */
-        // m_Q15 = A * M(n)
-        // 'A' (Amplitude/Depth) é TREMOLO_DEPTH_Q15
-        // 'M(n)' (Oscilador) é lfo_val_Q15
-        m_Q15 = ((Int32)lfo_val_Q15 * (Int32)TREMOLO_DEPTH_Q15) >> 15;
-
-        // env_Q15 = [Offset + A*M(n)]
-        // TREMOLO_OFFSET_Q15 tambem vale 1
-        env_Q15 = m_Q15 + (Int32)TREMOLO_OFFSET_Q15;
-        
-        /* (Saída = Envelope * Amostra) --- */
-        // y_n = env_Q15 * x_n_scaled
-        // Fórmula final do CÓDIGO:
-        // y(n) = [1 + A*M(n)] * [1 * x(n)]
-        y_n = (Int16)( ((Int32)env_Q15 * x_n_scaled) >> 15 );
-        
-        // (Escrever no BLOCO de saída, não no buffer global)
-        txBlock[i] = y_n; // Armazena o y(n) final
-    }
-}
 
 void processAudioReverb(Uint16* rxBlock, Uint16* txBlock)
 {
@@ -435,6 +347,139 @@ void processAudioReverb(Uint16* rxBlock, Uint16* txBlock)
 }
 
 
+void processAudioPhaser(Uint16* rxBlock, Uint16* txBlock)
+{
+    int i, j;
+    Int16 in_sample, out_sample;
+    Int32 lfo_raw, lfo_norm;
+    Int16 alpha_Q15;
+    Int32 alpha_range = (Int32)PHASER_MAX_ALPHA_Q15 - (Int32)PHASER_MIN_ALPHA_Q15;
+    Int32 term1, term2, term3, y_long;
+    Int16 x_n, y_n, x_prev, y_prev;
+    Int32 fb_val, input_with_fb;
+
+    for (i = 0; i < AUDIO_BLOCK_SIZE; i++)
+    {
+        in_sample = (Int16)rxBlock[i];
+
+        // LFO
+        lfo_raw = (Int32)g_lfoTable[g_phaserLfoIndex];
+        lfo_norm = (lfo_raw + 32768) >> 1;
+        alpha_Q15 = PHASER_MIN_ALPHA_Q15 + (Int16)((lfo_norm * alpha_range) >> 15);
+        g_phaserLfoIndex = (g_phaserLfoIndex + 1) % LFO_SIZE;
+
+        // Feedback com proteção
+        fb_val = ((Int32)g_phaserLastOutput * (Int32)PHASER_FEEDBACK_Q15) >> 15;
+        if (fb_val > 16000) fb_val = 16000;
+        else if (fb_val < -16000) fb_val = -16000;
+
+        input_with_fb = (Int32)in_sample + fb_val;
+        if (input_with_fb > 32767) input_with_fb = 32767;
+        else if (input_with_fb < -32768) input_with_fb = -32768;
+        x_n = (Int16)input_with_fb;
+
+        // Cadeia de Filtros
+        for (j = 0; j < PHASER_NUM_STAGES; j++)
+        {
+            x_prev = g_phaserXPrev[j];
+            y_prev = g_phaserYPrev[j];
+            term1 = -((Int32)alpha_Q15 * (Int32)x_n) >> 15;
+            term2 = (Int32)x_prev;
+            term3 = ((Int32)alpha_Q15 * (Int32)y_prev) >> 15;
+            y_long = term1 + term2 + term3;
+            if (y_long > 32767) y_long = 32767;
+            else if (y_long < -32768) y_long = -32768;
+            y_n = (Int16)y_long;
+            g_phaserXPrev[j] = x_n;
+            g_phaserYPrev[j] = y_n;
+            x_n = y_n;
+        }
+        g_phaserLastOutput = x_n;
+
+        // Mix
+        out_sample = (in_sample >> 1) + (x_n >> 1);
+        txBlock[i] = out_sample;
+    }
+}
+
+// -------------------------------------------------------------
+// [NOVO] PROCESSAMENTO AUTO-WAH (Envelope Follower + SVF)
+// -------------------------------------------------------------
+void processAudioAutoWah(Uint16* rxBlock, Uint16* txBlock)
+{
+    int i;
+    Int16 in_sample;
+    Int16 abs_in;
+    Int32 env_diff, env_calc;
+    Int16 freq_f_Q15;
+    Int32 freq_range;
+    Int16 low, band;
+    Int32 term_damp_band, term_f_band, term_f_high;
+    Int32 high_long, low_long, band_long;
+    Int32 out_scaled;
+
+    // Calcula range de frequência (Max - Min)
+    freq_range = (Int32)AUTO_WAH_MAX_FREQ_Q15 - (Int32)AUTO_WAH_MIN_FREQ_Q15;
+
+    // Carrega estados para registradores
+    low = g_autoWahStateLow;
+    band = g_autoWahStateBand;
+
+    for (i = 0; i < AUDIO_BLOCK_SIZE; i++)
+    {
+        in_sample = (Int16)rxBlock[i];
+
+        // 1. Envelope Follower
+        abs_in = (in_sample < 0) ? -in_sample : in_sample;
+        env_diff = (Int32)abs_in - (Int32)g_autoWahEnvState;
+        env_calc = (Int32)g_autoWahEnvState + ((env_diff * AUTO_WAH_ENV_SPEED_Q15) >> 15);
+        g_autoWahEnvState = (Int16)env_calc;
+
+        // 2. Mapeamento de Frequência
+        Int32 mod_amount = ((Int32)g_autoWahEnvState * (Int32)AUTO_WAH_SENSITIVITY_Q15) >> 15;
+        if (mod_amount > 32767) mod_amount = 32767;
+
+        freq_f_Q15 = AUTO_WAH_MIN_FREQ_Q15 + (Int16)((mod_amount * freq_range) >> 15);
+
+        // 3. Filtro SVF (Chamberlin)
+        Int32 input_reduced = (Int32)in_sample >> 1; // Reduz entrada para evitar distorção
+
+        // --- High Pass ---
+        term_damp_band = ((Int32)AUTO_WAH_DAMP_Q15 * (Int32)band) >> 15;
+        high_long = input_reduced - (Int32)low - term_damp_band;
+        if (high_long > 32767) high_long = 32767;
+        else if (high_long < -32768) high_long = -32768;
+        Int16 high = (Int16)high_long;
+
+        // --- Low Pass ---
+        term_f_band = ((Int32)freq_f_Q15 * (Int32)band) >> 15;
+        low_long = (Int32)low + term_f_band;
+        if (low_long > 32767) low_long = 32767;
+        else if (low_long < -32768) low_long = -32768;
+        low = (Int16)low_long;
+
+        // --- Band Pass (Saída do Wah) ---
+        term_f_high = ((Int32)freq_f_Q15 * (Int32)high) >> 15;
+        band_long = (Int32)band + term_f_high;
+        if (band_long > 32767) band_long = 32767;
+        else if (band_long < -32768) band_long = -32768;
+        band = (Int16)band_long;
+
+        // 4. Saída
+        // Compensa a redução da entrada (x2)
+        out_scaled = (Int32)band << 1;
+        if (out_scaled > 32767) out_scaled = 32767;
+        else if (out_scaled < -32768) out_scaled = -32768;
+
+        txBlock[i] = (Int16)out_scaled;
+    }
+
+    // Salva estados
+    g_autoWahStateLow = low;
+    g_autoWahStateBand = band;
+}
+
+
 interrupt void dmaRxIsr(void)
 {
     Uint16* pRx; // Ponteiro para o bloco de Rx
@@ -463,11 +508,11 @@ interrupt void dmaRxIsr(void)
             processAudioLoopback(pRx,pTx);
             break;
         case 1: // Flanger
-            processAudioFlanger(pRx, pTx);
+            processAudioPhaser(pRx, pTx);
             break;
 
         case 2: // Tremolo
-            processAudioTremolo(pRx, pTx);
+            processAudioAutoWah(pRx, pTx);
             break;
 
         case 3: // Reverb
@@ -484,19 +529,6 @@ interrupt void dmaRxIsr(void)
 interrupt void dmaTxIsr(void)
 {
     // Não faz nada
-}
-
-// (Funções de inicialização não precisam de alteração)
-void initLFO(void)
-{
-    int i;
-    float rad;
-    for (i = 0; i < 256; i++)
-    {
-        // (Gerar um seno de 0.0 a 1.0 e escalar para Q15)
-        rad = (float)i / 256.0 * (2.0 * PI);
-        g_lfoTable[i] = (Int16)(sinf(rad) * 32767.0);
-    }
 }
 
 void initReverb(void)
@@ -520,7 +552,38 @@ void initReverb(void)
         idxAP1 = 0; idxAP2 = 0;
 }
 
+void initLFO(void)
+{
+    int i;
+    float rad;
+    for (i = 0; i < 256; i++) {
+        rad = (float)i / 256.0 * (2.0 * PI);
+        g_lfoTable[i] = (Int16)(sinf(rad) * 32767.0);
+    }
+}
+
+void initPhaser(void)
+{
+    int i;
+    for (i = 0; i < PHASER_NUM_STAGES; i++) {
+        g_phaserXPrev[i] = 0;
+        g_phaserYPrev[i] = 0;
+    }
+    g_phaserLastOutput = 0;
+    g_phaserLfoIndex = 0;
+}
+
+// [NOVO] Inicializa Auto Wah
+void initAutoWah(void)
+{
+    g_autoWahEnvState = 0;
+    g_autoWahStateLow = 0;
+    g_autoWahStateBand = 0;
+}
+
 void initAlgorithms(void) {
     initLFO();
     initReverb();
+    initPhaser();
+    initAutoWah();
 }
