@@ -46,10 +46,10 @@ int idxC1 = 0, idxC2 = 0, idxC3 = 0, idxC4 = 0;
 int idxAP1 = 0, idxAP2 = 0;
 // =========================================================
 //--------------- VARIÁVEIS DO PHASER -------------------------
-#pragma DATA_SECTION(g_phaserXPrev, "phaserMem")
+#pragma DATA_SECTION(g_phaserXPrev, "dmaMem")
 Int16 g_phaserXPrev[PHASER_NUM_STAGES];
 
-#pragma DATA_SECTION(g_phaserYPrev, "phaserMem")
+#pragma DATA_SECTION(g_phaserYPrev, "dmaMem")
 Int16 g_phaserYPrev[PHASER_NUM_STAGES];
 
 Int16 g_lfoTable[LFO_SIZE];

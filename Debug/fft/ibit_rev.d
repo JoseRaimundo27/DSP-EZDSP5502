@@ -1,12 +1,12 @@
 # FIXED
 
 fft/ibit_rev.obj: ../fft/ibit_rev.c
-fft/ibit_rev.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/DSP-EZDSP5502/include/tistdtypes.h
-fft/ibit_rev.obj: /home/caco/Área\ de\ trabalho/EngComp/LABIII/DSP-EZDSP5502/include/icomplex.h
+fft/ibit_rev.obj: /home/caco/workspace_v12/aic3204_dma_loopback/include/tistdtypes.h
+fft/ibit_rev.obj: /home/caco/workspace_v12/aic3204_dma_loopback/include/icomplex.h
 
 ../fft/ibit_rev.c:
 
-/home/caco/Área\ de\ trabalho/EngComp/LABIII/DSP-EZDSP5502/include/tistdtypes.h:
+/home/caco/workspace_v12/aic3204_dma_loopback/include/tistdtypes.h:
 
-/home/caco/Área\ de\ trabalho/EngComp/LABIII/DSP-EZDSP5502/include/icomplex.h:
+/home/caco/workspace_v12/aic3204_dma_loopback/include/icomplex.h:
 
