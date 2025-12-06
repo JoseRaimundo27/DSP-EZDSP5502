@@ -63,7 +63,7 @@ class SchroederReverb:
 
 # Defina seus arquivos aqui
 FILE_DRY = 'original.wav' 
-FILE_TARGET = '05-REV-STAGEA.wav' 
+FILE_TARGET = '11-REV-STAGEDb.wav' 
 
 # Configurações globais para o GA acessar
 FS = 48000
