@@ -22,8 +22,8 @@ AP_LENS = [225, 341]               # All-Pass (Difusão)
 # OBS: Se no C você usa Q15 (ex: 27524), divida por 32767 aqui.
 # Ex: 27524 / 32767 = 0.84
 
-C_GAINS = [0.9, 0.9, 0.4, 0.4] # Ganhos individuais para cada Comb
-AP_GAIN = 0.5962                      # Ganho do All-Pass (fixo para ambos)
+C_GAINS = [0.9482, 0.9329, 0.9423, 0.9] # Ganhos individuais para cada Comb
+AP_GAIN = 0.6119                      # Ganho do All-Pass (fixo para ambos)
 
 # ==============================================================================
 # ⚙️ MOTOR DO REVERB (NÃO PRECISA MEXER)
