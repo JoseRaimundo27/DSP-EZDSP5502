@@ -12,6 +12,6 @@
 // Exemplo para Si Bemol (Bb): Ratio 1.122 -> 1.122 * 32767 = 36780
 // Exemplo para Lá (A): Ratio 1.259 -> 1.259 * 32767 = 41283
 // COLOQUE O VALOR DO SEU PRINT PYTHON AQUI:
-#define PITCH_RATIO_VAL 34715
+#define PITCH_RATIO_VAL 29192
 
 #endif

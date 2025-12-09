@@ -513,114 +513,82 @@ void processAudioAutoWah(Uint16* rxBlock, Uint16* txBlock)
 
 // Certifique-se de que g_sineWindow está definido no topo do arquivo!
 
+// Pitch Shifter com Interpolação Linear e Janela Senoidal (Sem Float)
 void processAudioPitchShifter(Uint16* rxBlock, Uint16* txBlock)
 {
     int i;
     Int16 x_n, y_n;
-
-    // Variáveis de Ponteiro (Q32)
     Uint32 phA, phB;
     Uint16 normPosA;
-
-    // Variáveis de Delay
     Uint32 delayFixedA, delayFixedB;
-
-    // Variáveis de Leitura e Interpolação
     int idxA_0, idxA_1, idxB_0, idxB_1;
     Uint16 fracA, fracB;
-    Int16 sA, sB; // Amostras interpoladas
-
-    // Ganhos (Q15 via Tabela)
+    Int16 sA, sB;
     Int16 gainA, gainB;
     Int32 mix32;
-
-    // Variável aux para índice da tabela
     Uint16 tblIdx;
 
     for (i = 0; i < AUDIO_BLOCK_SIZE; i++)
     {
         x_n = rxBlock[i];
 
-        // 1. Gravar no buffer circular
+        // Grava Buffer
         g_pitchBuffer[g_pitchWriteIndex] = x_n;
 
-        // 2. Definir Phasors
+        // Calcula Phasors
         phA = g_phasor_int;
-        phB = g_phasor_int + 2147483648UL; // +0.5 em Q32
+        phB = g_phasor_int + 2147483648UL;
 
-        // 3. Converter Phasor para Delay (Q16.16)
+        // Calcula Delay
         normPosA = (Uint16)(phA >> 16);
         Uint16 normPosB = (Uint16)(phB >> 16);
-
         delayFixedA = (Uint32)normPosA * PITCH_WINDOW_SIZE;
         delayFixedB = (Uint32)normPosB * PITCH_WINDOW_SIZE;
 
-        // 4. Calcular Ponteiros de Leitura
+        // Ponteiros de Leitura
         Uint32 rdPtrA = ((Uint32)g_pitchWriteIndex << 16) - delayFixedA;
         Uint32 rdPtrB = ((Uint32)g_pitchWriteIndex << 16) - delayFixedB;
 
-        // 5. Interpolação Linear (Inteiro/Fração)
-        idxA_0 = (int)(rdPtrA >> 16);
+        // Índices Inteiros e Fração
+        idxA_0 = (int)(rdPtrA >> 16) & PITCH_MASK;
         fracA  = (Uint16)(rdPtrA & 0xFFFF);
-
-        idxB_0 = (int)(rdPtrB >> 16);
-        fracB  = (Uint16)(rdPtrB & 0xFFFF);
-
-        // Wrap Around
-        idxA_0 &= PITCH_MASK;
-        idxB_0 &= PITCH_MASK;
-
         idxA_1 = (idxA_0 + 1) & PITCH_MASK;
+
+        idxB_0 = (int)(rdPtrB >> 16) & PITCH_MASK;
+        fracB  = (Uint16)(rdPtrB & 0xFFFF);
         idxB_1 = (idxB_0 + 1) & PITCH_MASK;
 
-        // 6. Ler e Interpolar
+        // Interpolação Linear (Amostras)
         Int16 vA0 = g_pitchBuffer[idxA_0];
         Int16 vA1 = g_pitchBuffer[idxA_1];
-        // Val = V0 + frac*(V1-V0)
         sA = vA0 + (Int16)(((Int32)(vA1 - vA0) * fracA) >> 16);
 
         Int16 vB0 = g_pitchBuffer[idxB_0];
         Int16 vB1 = g_pitchBuffer[idxB_1];
         sB = vB0 + (Int16)(((Int32)(vB1 - vB0) * fracB) >> 16);
 
-        // ========================================================
-        // 7. Calcular Ganhos (MODIFICADO: JANELA SENOIDAL)
-        // ========================================================
-        // Substituímos a lógica linear (Triangular) pela Tabela Senoidal
-        // A tabela g_sineWindow é Q15 (0..32767)
+        // Ganhos (Janela Senoidal)
+        if (normPosA < 32768) gainA = g_sineWindow[normPosA >> 7];
+        else                  gainA = g_sineWindow[(65535 - normPosA) >> 7];
 
-        // Canal A
-        // normPosA vai de 0 a 65535.
-        // Se < 32768 (Primeira metade): Usamos a tabela subindo (0..256)
-        if (normPosA < 32768) {
-            tblIdx = normPosA >> 7; // 32768 / 128 = 256
-            gainA = g_sineWindow[tblIdx];
-        } else {
-            // Segunda metade: Usamos a tabela descendo (256..0)
-            tblIdx = (65535 - normPosA) >> 7;
-            gainA = g_sineWindow[tblIdx];
-        }
+        if (normPosB < 32768) gainB = g_sineWindow[normPosB >> 7];
+        else                  gainB = g_sineWindow[(65535 - normPosB) >> 7];
 
-        // Canal B (Mesma lógica)
-        if (normPosB < 32768) {
-            tblIdx = normPosB >> 7;
-            gainB = g_sineWindow[tblIdx];
-        } else {
-            tblIdx = (65535 - normPosB) >> 7;
-            gainB = g_sineWindow[tblIdx];
-        }
-
-        // 8. Mixagem Final
-        // AVISO: A tabela é Q15, Amostra é Q15. Result = Q30.
-        // Shift é >> 15 (não 16) para manter o ganho unitário.
+        // Mix
         mix32 = ((Int32)sA * gainA) + ((Int32)sB * gainB);
         y_n = (Int16)(mix32 >> 15);
 
-        // 9. Saída
+        // Saída e Atualização
         txBlock[i] = y_n;
         g_pitchWriteIndex = (g_pitchWriteIndex + 1) & PITCH_MASK;
         g_phasor_int += g_phasorStep_int;
     }
+}
+
+void processAudioPitchReverb(Uint16* rxBlock, Uint16* txBlock)
+{
+    processAudioPitchShifter(rxBlock, txBlock);
+    processAudioReverb(txBlock, txBlock);
 }
 
 
@@ -660,7 +628,7 @@ interrupt void dmaRxIsr(void)
             break;
 
         case 3: // Reverb
-            processAudioPitchShifter(pRx, pTx);
+            processAudioPitchReverb(pRx, pTx);
             break;
 
         default: // Segurança (caso currentState seja corrompido)
