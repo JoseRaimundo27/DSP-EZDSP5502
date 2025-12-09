@@ -5,6 +5,7 @@
 #include <math.h>
 #include "icomplex.h"
 
+#include "pitch_params.h"
 #include "reverb_params.h"
 #include "phaser_params.h"
 #include "auto_wah_params.h"
@@ -44,8 +45,39 @@ Int16 *pAP1, *pAP2;
 // Índices atuais (Cabeçotes de Leitura/Escrita)
 int idxC1 = 0, idxC2 = 0, idxC3 = 0, idxC4 = 0;
 int idxAP1 = 0, idxAP2 = 0;
-// =========================================================
-//--------------- VARIÁVEIS DO PHASER -------------------------
+// ================= VARIÁVEIS DO PITCH SHIFT =================
+
+#pragma DATA_SECTION(g_pitchBuffer, "dmaMem") // Ou "data_br_buf" conforme seu linker
+Int16 g_pitchBuffer[PITCH_BUF_SIZE];
+Uint16 g_pitchWriteIndex = 0;
+
+// Tabela de Seno para Janelamento (0 a PI/2)
+// 257 pontos para cobrir de 0 a 1.0 no ganho
+// Valores Q15 (0 a 32767)
+#pragma DATA_SECTION(g_sineWindow, "dmaMem")
+const Int16 g_sineWindow[257] = {
+    0, 201, 402, 603, 804, 1005, 1206, 1406, 1607, 1808, 2009, 2209, 2410, 2610, 2811, 3011,
+    3211, 3411, 3611, 3811, 4011, 4210, 4410, 4609, 4808, 5007, 5205, 5403, 5601, 5799, 5997, 6195,
+    6392, 6589, 6786, 6983, 7179, 7375, 7571, 7766, 7961, 8156, 8351, 8545, 8739, 8933, 9126, 9319,
+    9511, 9703, 9895, 10087, 10278, 10469, 10659, 10849, 11038, 11227, 11416, 11604, 11792, 11980, 12167, 12353,
+    12539, 12724, 12909, 13093, 13277, 13460, 13643, 13825, 14007, 14188, 14368, 14548, 14727, 14906, 15084, 15261,
+    15438, 15614, 15790, 15965, 16139, 16313, 16486, 16658, 16830, 17001, 17171, 17341, 17510, 17678, 17846, 18013,
+    18180, 18346, 18511, 18676, 18840, 19003, 19165, 19327, 19488, 19648, 19808, 19967, 20125, 20282, 20439, 20595,
+    20750, 20905, 21059, 21212, 21364, 21516, 21667, 21817, 21966, 22115, 22263, 22410, 22556, 22701, 22846, 22990,
+    23133, 23276, 23417, 23558, 23698, 23837, 23975, 24113, 24249, 24385, 24520, 24654, 24787, 24919, 25050, 25180,
+    25310, 25438, 25566, 25693, 25819, 25944, 26068, 26191, 26314, 26435, 26556, 26676, 26795, 26913, 27030, 27146,
+    27261, 27375, 27488, 27600, 27711, 27821, 27930, 28038, 28145, 28251, 28356, 28460, 28563, 28665, 28766, 28866,
+    28965, 29063, 29160, 29256, 29351, 29445, 29538, 29630, 29721, 29811, 29900, 29988, 30075, 30161, 30246, 30330,
+    30413, 30495, 30576, 30656, 30735, 30813, 30890, 30966, 31041, 31115, 31188, 31260, 31331, 31401, 31470, 31538,
+    31605, 31671, 31736, 31800, 31863, 31925, 31986, 32046, 32105, 32163, 32220, 32276, 32331, 32385, 32438, 32490,
+    32541, 32591, 32640, 32688, 32735, 32767 // Fim (1.0 em Q15)
+};
+
+// Variáveis de Controle (Inteiros de 32 bits para alta performance)
+Uint32 g_phasor_int = 0;
+Uint32 g_phasorStep_int = 0;
+
+// ================= VARIÁVEIS DO PHASER =================
 #pragma DATA_SECTION(g_phaserXPrev, "dmaMem")
 Int16 g_phaserXPrev[PHASER_NUM_STAGES];
 
@@ -56,7 +88,7 @@ Int16 g_lfoTable[LFO_SIZE];
 volatile Int16 g_phaserLastOutput = 0;
 volatile Uint16 g_phaserLfoIndex = 0;
 
-//--------------- VARIÁVEIS DO AUTO-WAH -------------------------
+// ================= VARIÁVEIS DO AUTO-WAH =================
 // Estado do Envelope (Volume atual)
 volatile Int16 g_autoWahEnvState = 0;
 
@@ -479,6 +511,118 @@ void processAudioAutoWah(Uint16* rxBlock, Uint16* txBlock)
     g_autoWahStateBand = band;
 }
 
+// Certifique-se de que g_sineWindow está definido no topo do arquivo!
+
+void processAudioPitchShifter(Uint16* rxBlock, Uint16* txBlock)
+{
+    int i;
+    Int16 x_n, y_n;
+
+    // Variáveis de Ponteiro (Q32)
+    Uint32 phA, phB;
+    Uint16 normPosA;
+
+    // Variáveis de Delay
+    Uint32 delayFixedA, delayFixedB;
+
+    // Variáveis de Leitura e Interpolação
+    int idxA_0, idxA_1, idxB_0, idxB_1;
+    Uint16 fracA, fracB;
+    Int16 sA, sB; // Amostras interpoladas
+
+    // Ganhos (Q15 via Tabela)
+    Int16 gainA, gainB;
+    Int32 mix32;
+
+    // Variável aux para índice da tabela
+    Uint16 tblIdx;
+
+    for (i = 0; i < AUDIO_BLOCK_SIZE; i++)
+    {
+        x_n = rxBlock[i];
+
+        // 1. Gravar no buffer circular
+        g_pitchBuffer[g_pitchWriteIndex] = x_n;
+
+        // 2. Definir Phasors
+        phA = g_phasor_int;
+        phB = g_phasor_int + 2147483648UL; // +0.5 em Q32
+
+        // 3. Converter Phasor para Delay (Q16.16)
+        normPosA = (Uint16)(phA >> 16);
+        Uint16 normPosB = (Uint16)(phB >> 16);
+
+        delayFixedA = (Uint32)normPosA * PITCH_WINDOW_SIZE;
+        delayFixedB = (Uint32)normPosB * PITCH_WINDOW_SIZE;
+
+        // 4. Calcular Ponteiros de Leitura
+        Uint32 rdPtrA = ((Uint32)g_pitchWriteIndex << 16) - delayFixedA;
+        Uint32 rdPtrB = ((Uint32)g_pitchWriteIndex << 16) - delayFixedB;
+
+        // 5. Interpolação Linear (Inteiro/Fração)
+        idxA_0 = (int)(rdPtrA >> 16);
+        fracA  = (Uint16)(rdPtrA & 0xFFFF);
+
+        idxB_0 = (int)(rdPtrB >> 16);
+        fracB  = (Uint16)(rdPtrB & 0xFFFF);
+
+        // Wrap Around
+        idxA_0 &= PITCH_MASK;
+        idxB_0 &= PITCH_MASK;
+
+        idxA_1 = (idxA_0 + 1) & PITCH_MASK;
+        idxB_1 = (idxB_0 + 1) & PITCH_MASK;
+
+        // 6. Ler e Interpolar
+        Int16 vA0 = g_pitchBuffer[idxA_0];
+        Int16 vA1 = g_pitchBuffer[idxA_1];
+        // Val = V0 + frac*(V1-V0)
+        sA = vA0 + (Int16)(((Int32)(vA1 - vA0) * fracA) >> 16);
+
+        Int16 vB0 = g_pitchBuffer[idxB_0];
+        Int16 vB1 = g_pitchBuffer[idxB_1];
+        sB = vB0 + (Int16)(((Int32)(vB1 - vB0) * fracB) >> 16);
+
+        // ========================================================
+        // 7. Calcular Ganhos (MODIFICADO: JANELA SENOIDAL)
+        // ========================================================
+        // Substituímos a lógica linear (Triangular) pela Tabela Senoidal
+        // A tabela g_sineWindow é Q15 (0..32767)
+
+        // Canal A
+        // normPosA vai de 0 a 65535.
+        // Se < 32768 (Primeira metade): Usamos a tabela subindo (0..256)
+        if (normPosA < 32768) {
+            tblIdx = normPosA >> 7; // 32768 / 128 = 256
+            gainA = g_sineWindow[tblIdx];
+        } else {
+            // Segunda metade: Usamos a tabela descendo (256..0)
+            tblIdx = (65535 - normPosA) >> 7;
+            gainA = g_sineWindow[tblIdx];
+        }
+
+        // Canal B (Mesma lógica)
+        if (normPosB < 32768) {
+            tblIdx = normPosB >> 7;
+            gainB = g_sineWindow[tblIdx];
+        } else {
+            tblIdx = (65535 - normPosB) >> 7;
+            gainB = g_sineWindow[tblIdx];
+        }
+
+        // 8. Mixagem Final
+        // AVISO: A tabela é Q15, Amostra é Q15. Result = Q30.
+        // Shift é >> 15 (não 16) para manter o ganho unitário.
+        mix32 = ((Int32)sA * gainA) + ((Int32)sB * gainB);
+        y_n = (Int16)(mix32 >> 15);
+
+        // 9. Saída
+        txBlock[i] = y_n;
+        g_pitchWriteIndex = (g_pitchWriteIndex + 1) & PITCH_MASK;
+        g_phasor_int += g_phasorStep_int;
+    }
+}
+
 
 interrupt void dmaRxIsr(void)
 {
@@ -516,7 +660,7 @@ interrupt void dmaRxIsr(void)
             break;
 
         case 3: // Reverb
-            processAudioReverb(pRx, pTx);
+            processAudioPitchShifter(pRx, pTx);
             break;
 
         default: // Segurança (caso currentState seja corrompido)
@@ -581,8 +725,32 @@ void initAutoWah(void)
     g_autoWahStateBand = 0;
 }
 
+void initPitchShift(void) {
+    int i;
+    // 1. Limpar Buffer
+    for(i=0; i<PITCH_BUF_SIZE; i++) g_pitchBuffer[i] = 0;
+    g_pitchWriteIndex = 0;
+    g_phasor_int = 0;
+
+    // 2. Calcular o Passo (Step) baseado no Ratio definido no .h
+    // Fazemos a conta com float AQUI (na inicialização) para não gastar CPU depois.
+    
+    // Converte o define Q15 para float (Ex: 36780 -> 1.122)
+    float ratio = (float)PITCH_RATIO_VAL / 32767.0f;
+    
+    // Fórmula: (1.0 - ratio) / WindowSize
+    // Nota: Se ratio > 1 (Voz Grossa), o resultado é negativo.
+    // O Uint32 vai tratar o negativo como um número gigante (Wrap Around), o que funciona perfeitamente.
+    float stepFloat = (1.0f - ratio) / (float)PITCH_WINDOW_SIZE;
+    
+    // Converter para Q32 (Escala total de 32 bits)
+    // 4294967296.0f é 2^32
+    g_phasorStep_int = (Uint32)(stepFloat * 4294967296.0f);
+}
+
 void initAlgorithms(void) {
     initLFO();
+    initPitchShift();
     initReverb();
     initPhaser();
     initAutoWah();
