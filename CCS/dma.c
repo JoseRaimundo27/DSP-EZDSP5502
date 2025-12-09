@@ -282,6 +282,49 @@ void processAudioLoopback(Uint16* rxBlock, Uint16* txBlock)
     }
 }
 
+// Variável Global que o Loop de Áudio vai ler
+ReverbPreset g_currentPreset;
+
+const ReverbPreset g_presetBank[6] = {
+    // 0: Reverb Puro (Sem Pitch) - "Warm Hall"
+    { 0, 0, {28180, 28180, 27850, 27100}, 19660 },
+
+    // 1: Pitch A (Grave -5 semi) + Reverb Longo
+    // Ratio A = 43738
+    { 1, 43738, {29000, 28500, 28000, 27500}, 21000 },
+
+    // 2: Pitch Bb (Rádio -4 semi) + Reverb Médio
+    // Ratio Bb = 41284
+    { 1, 41284, {28180, 28180, 27850, 27100}, 19660 },
+
+    // 3: Pitch Db (Leve -1 semi) + Reverb Curto
+    // Ratio Db = 34715
+    { 1, 34715, {26000, 26000, 25000, 24000}, 16000 },
+
+    // 4: Pitch Fb (Agudo +2 semi) + Reverb Denso
+    // Ratio Fb = 29192
+    { 1, 29192, {28500, 28500, 28500, 28500}, 22000 },
+    
+    // 5: Outro efeito extra (Ex: Monstro total -12 semi)
+    // Ratio -12 = 65535
+    { 1, 65535, {28000, 28000, 28000, 28000}, 20000 }
+};
+
+
+void loadPreset(int index) {
+    if (index < 0 || index > 5) return;
+    
+    g_currentPreset = g_presetBank[index];
+
+    if (g_currentPreset.enablePitch) {
+        float ratio = (float)g_currentPreset.pitchRatio / 32767.0f;
+        float stepFloat = (1.0f - ratio) / (float)PITCH_WINDOW_SIZE;
+        g_phasorStep_int = (Uint32)(stepFloat * 4294967296.0f);
+    } else {
+        g_phasorStep_int = 0;
+    }
+}
+
 
 void processAudioReverb(Uint16* rxBlock, Uint16* txBlock)
 {
@@ -295,6 +338,12 @@ void processAudioReverb(Uint16* rxBlock, Uint16* txBlock)
         Int16 ap2_in, ap2_out, ap2_bufferVal;
         Int32 tempCalc; // Para contas de 32 bits
 
+        Int16 curCGain0 = g_currentPreset.cGains[0];
+        Int16 curCGain1 = g_currentPreset.cGains[1];
+        Int16 curCGain2 = g_currentPreset.cGains[2];
+        Int16 curCGain3 = g_currentPreset.cGains[3];
+        Int16 curAPGain = g_currentPreset.apGain;
+
         for (i = 0; i < AUDIO_BLOCK_SIZE; i++)
         {
             x_n = rxBlock[i];
@@ -306,7 +355,7 @@ void processAudioReverb(Uint16* rxBlock, Uint16* txBlock)
             Int16 buffVal1 = pC1[idxC1];
             combOut1 = buffVal1; // A saída é o que estava no buffer
             // Feedback: Buffer = Input + (Output * Gain)
-            tempCalc = (Int32)(x_n >> 2) + (((Int32)buffVal1 * C1_GAIN) >> 15);
+            tempCalc = (Int32)(x_n >> 2) + (((Int32)buffVal1 * curCGain0) >> 15);
             pC1[idxC1] = (Int16)tempCalc;
             // Avançar índice circular
             if (++idxC1 >= C1_LEN) idxC1 = 0;
@@ -314,21 +363,21 @@ void processAudioReverb(Uint16* rxBlock, Uint16* txBlock)
             // Comb 2
             Int16 buffVal2 = pC2[idxC2];
             combOut2 = buffVal2;
-            tempCalc = (Int32)(x_n >> 2) + (((Int32)buffVal2 * C2_GAIN) >> 15);
+            tempCalc = (Int32)(x_n >> 2) + (((Int32)buffVal2 * curCGain1) >> 15);
             pC2[idxC2] = (Int16)tempCalc;
             if (++idxC2 >= C2_LEN) idxC2 = 0;
 
             // Comb 3
             Int16 buffVal3 = pC3[idxC3];
             combOut3 = buffVal3;
-            tempCalc = (Int32)(x_n >> 2) + (((Int32)buffVal3 * C3_GAIN) >> 15);
+            tempCalc = (Int32)(x_n >> 2) + (((Int32)buffVal3 * curCGain2) >> 15);
             pC3[idxC3] = (Int16)tempCalc;
             if (++idxC3 >= C3_LEN) idxC3 = 0;
 
             // Comb 4
             Int16 buffVal4 = pC4[idxC4];
             combOut4 = buffVal4;
-            tempCalc = (Int32)(x_n >> 2) + (((Int32)buffVal4 * C4_GAIN) >> 15);
+            tempCalc = (Int32)(x_n >> 2) + (((Int32)buffVal4 * curCGain3) >> 15);
             pC4[idxC4] = (Int16)tempCalc;
             if (++idxC4 >= C4_LEN) idxC4 = 0;
 
@@ -342,33 +391,18 @@ void processAudioReverb(Uint16* rxBlock, Uint16* txBlock)
             // Input = sumCombs
             ap1_in = sumCombs;
             ap1_bufferVal = pAP1[idxAP1];
-
-            // Equação All-Pass (Schroeder):
-            // Output = -Gain*Input + Buffer
-            // Buffer_New = Input + Gain*Buffer
-
-            // 1. Calcular Buffer Novo
-            tempCalc = (Int32)ap1_in + (((Int32)ap1_bufferVal * AP_GAIN) >> 15);
+            tempCalc = (Int32)ap1_in + (((Int32)ap1_bufferVal * curAPGain) >> 15);
             pAP1[idxAP1] = (Int16)tempCalc; // Grava no delay
-
-            // 2. Calcular Saída
-            // Output = Buffer_Old - (Gain * Input)  <-- Forma canônica mais segura
-            ap1_out = ap1_bufferVal - (Int16)(((Int32)ap1_in * AP_GAIN) >> 15);
-
+            ap1_out = ap1_bufferVal - (Int16)(((Int32)ap1_in * curAPGain) >> 15);
             if (++idxAP1 >= AP1_LEN) idxAP1 = 0;
 
 
             // --- ESTÁGIO 4: FILTRO ALL-PASS 2 ---
-            // Input = ap1_out
             ap2_in = ap1_out;
             ap2_bufferVal = pAP2[idxAP2];
-
-            // Mesmo processo do AP1
-            tempCalc = (Int32)ap2_in + (((Int32)ap2_bufferVal * AP_GAIN) >> 15);
+            tempCalc = (Int32)ap2_in + (((Int32)ap2_bufferVal * curAPGain) >> 15);
             pAP2[idxAP2] = (Int16)tempCalc;
-
-            ap2_out = ap2_bufferVal - (Int16)(((Int32)ap2_in * AP_GAIN) >> 15);
-
+            ap2_out = ap2_bufferVal - (Int16)(((Int32)ap2_in * curAPGain) >> 15);
             if (++idxAP2 >= AP2_LEN) idxAP2 = 0;
 
 
@@ -376,6 +410,90 @@ void processAudioReverb(Uint16* rxBlock, Uint16* txBlock)
             y_n = ap2_out;
             txBlock[i] = y_n;
         }
+}
+
+// Pitch Shifter com Interpolação Linear e Janela Senoidal (Sem Float)
+void processAudioPitchShifter(Uint16* rxBlock, Uint16* txBlock)
+{
+    int i;
+
+    if (g_currentPreset.enablePitch == 0) {
+        for(i=0; i<AUDIO_BLOCK_SIZE; i++) txBlock[i] = rxBlock[i];
+        return;
+    }
+
+    Int16 x_n, y_n;
+    Uint32 phA, phB;
+    Uint16 normPosA;
+    Uint32 delayFixedA, delayFixedB;
+    int idxA_0, idxA_1, idxB_0, idxB_1;
+    Uint16 fracA, fracB;
+    Int16 sA, sB;
+    Int16 gainA, gainB;
+    Int32 mix32;
+    Uint16 tblIdx;
+
+    for (i = 0; i < AUDIO_BLOCK_SIZE; i++)
+    {
+        x_n = rxBlock[i];
+
+        // Grava Buffer
+        g_pitchBuffer[g_pitchWriteIndex] = x_n;
+
+        // Calcula Phasors
+        phA = g_phasor_int;
+        phB = g_phasor_int + 2147483648UL;
+
+        // Calcula Delay
+        normPosA = (Uint16)(phA >> 16);
+        Uint16 normPosB = (Uint16)(phB >> 16);
+        delayFixedA = (Uint32)normPosA * PITCH_WINDOW_SIZE;
+        delayFixedB = (Uint32)normPosB * PITCH_WINDOW_SIZE;
+
+        // Ponteiros de Leitura
+        Uint32 rdPtrA = ((Uint32)g_pitchWriteIndex << 16) - delayFixedA;
+        Uint32 rdPtrB = ((Uint32)g_pitchWriteIndex << 16) - delayFixedB;
+
+        // Índices Inteiros e Fração
+        idxA_0 = (int)(rdPtrA >> 16) & PITCH_MASK;
+        fracA  = (Uint16)(rdPtrA & 0xFFFF);
+        idxA_1 = (idxA_0 + 1) & PITCH_MASK;
+
+        idxB_0 = (int)(rdPtrB >> 16) & PITCH_MASK;
+        fracB  = (Uint16)(rdPtrB & 0xFFFF);
+        idxB_1 = (idxB_0 + 1) & PITCH_MASK;
+
+        // Interpolação Linear (Amostras)
+        Int16 vA0 = g_pitchBuffer[idxA_0];
+        Int16 vA1 = g_pitchBuffer[idxA_1];
+        sA = vA0 + (Int16)(((Int32)(vA1 - vA0) * fracA) >> 16);
+
+        Int16 vB0 = g_pitchBuffer[idxB_0];
+        Int16 vB1 = g_pitchBuffer[idxB_1];
+        sB = vB0 + (Int16)(((Int32)(vB1 - vB0) * fracB) >> 16);
+
+        // Ganhos (Janela Senoidal)
+        if (normPosA < 32768) gainA = g_sineWindow[normPosA >> 7];
+        else                  gainA = g_sineWindow[(65535 - normPosA) >> 7];
+
+        if (normPosB < 32768) gainB = g_sineWindow[normPosB >> 7];
+        else                  gainB = g_sineWindow[(65535 - normPosB) >> 7];
+
+        // Mix
+        mix32 = ((Int32)sA * gainA) + ((Int32)sB * gainB);
+        y_n = (Int16)(mix32 >> 15);
+
+        // Saída e Atualização
+        txBlock[i] = y_n;
+        g_pitchWriteIndex = (g_pitchWriteIndex + 1) & PITCH_MASK;
+        g_phasor_int += g_phasorStep_int;
+    }
+}
+
+void processAudioPitchReverb(Uint16* rxBlock, Uint16* txBlock)
+{
+    processAudioPitchShifter(rxBlock, txBlock);
+    processAudioReverb(txBlock, txBlock);
 }
 
 
@@ -511,87 +629,6 @@ void processAudioAutoWah(Uint16* rxBlock, Uint16* txBlock)
     g_autoWahStateBand = band;
 }
 
-// Certifique-se de que g_sineWindow está definido no topo do arquivo!
-
-// Pitch Shifter com Interpolação Linear e Janela Senoidal (Sem Float)
-void processAudioPitchShifter(Uint16* rxBlock, Uint16* txBlock)
-{
-    int i;
-    Int16 x_n, y_n;
-    Uint32 phA, phB;
-    Uint16 normPosA;
-    Uint32 delayFixedA, delayFixedB;
-    int idxA_0, idxA_1, idxB_0, idxB_1;
-    Uint16 fracA, fracB;
-    Int16 sA, sB;
-    Int16 gainA, gainB;
-    Int32 mix32;
-    Uint16 tblIdx;
-
-    for (i = 0; i < AUDIO_BLOCK_SIZE; i++)
-    {
-        x_n = rxBlock[i];
-
-        // Grava Buffer
-        g_pitchBuffer[g_pitchWriteIndex] = x_n;
-
-        // Calcula Phasors
-        phA = g_phasor_int;
-        phB = g_phasor_int + 2147483648UL;
-
-        // Calcula Delay
-        normPosA = (Uint16)(phA >> 16);
-        Uint16 normPosB = (Uint16)(phB >> 16);
-        delayFixedA = (Uint32)normPosA * PITCH_WINDOW_SIZE;
-        delayFixedB = (Uint32)normPosB * PITCH_WINDOW_SIZE;
-
-        // Ponteiros de Leitura
-        Uint32 rdPtrA = ((Uint32)g_pitchWriteIndex << 16) - delayFixedA;
-        Uint32 rdPtrB = ((Uint32)g_pitchWriteIndex << 16) - delayFixedB;
-
-        // Índices Inteiros e Fração
-        idxA_0 = (int)(rdPtrA >> 16) & PITCH_MASK;
-        fracA  = (Uint16)(rdPtrA & 0xFFFF);
-        idxA_1 = (idxA_0 + 1) & PITCH_MASK;
-
-        idxB_0 = (int)(rdPtrB >> 16) & PITCH_MASK;
-        fracB  = (Uint16)(rdPtrB & 0xFFFF);
-        idxB_1 = (idxB_0 + 1) & PITCH_MASK;
-
-        // Interpolação Linear (Amostras)
-        Int16 vA0 = g_pitchBuffer[idxA_0];
-        Int16 vA1 = g_pitchBuffer[idxA_1];
-        sA = vA0 + (Int16)(((Int32)(vA1 - vA0) * fracA) >> 16);
-
-        Int16 vB0 = g_pitchBuffer[idxB_0];
-        Int16 vB1 = g_pitchBuffer[idxB_1];
-        sB = vB0 + (Int16)(((Int32)(vB1 - vB0) * fracB) >> 16);
-
-        // Ganhos (Janela Senoidal)
-        if (normPosA < 32768) gainA = g_sineWindow[normPosA >> 7];
-        else                  gainA = g_sineWindow[(65535 - normPosA) >> 7];
-
-        if (normPosB < 32768) gainB = g_sineWindow[normPosB >> 7];
-        else                  gainB = g_sineWindow[(65535 - normPosB) >> 7];
-
-        // Mix
-        mix32 = ((Int32)sA * gainA) + ((Int32)sB * gainB);
-        y_n = (Int16)(mix32 >> 15);
-
-        // Saída e Atualização
-        txBlock[i] = y_n;
-        g_pitchWriteIndex = (g_pitchWriteIndex + 1) & PITCH_MASK;
-        g_phasor_int += g_phasorStep_int;
-    }
-}
-
-void processAudioPitchReverb(Uint16* rxBlock, Uint16* txBlock)
-{
-    processAudioPitchShifter(rxBlock, txBlock);
-    processAudioReverb(txBlock, txBlock);
-}
-
-
 interrupt void dmaRxIsr(void)
 {
     Uint16* pRx; // Ponteiro para o bloco de Rx
@@ -614,25 +651,48 @@ interrupt void dmaRxIsr(void)
 
     // --- SELETOR DE EFEITO ---
 
+    // Dentro da sua função principal de processamento ou interrupção:
+
     switch (currentState)
     {
         case 0:
-            processAudioLoopback(pRx,pTx);
-            break;
-        case 1: // Flanger
-            processAudioPhaser(pRx, pTx);
+            processAudioLoopback(pRx, pTx);
             break;
 
-        case 2: // Tremolo
-            processAudioAutoWah(pRx, pTx);
+        case 1: // Reverb Puro (Preset 0)
+            loadPreset(0); 
+            processAudioPitchReverb(pRx, pTx); // Chama Pitch (Bypass) -> Reverb
             break;
 
-        case 3: // Reverb
+        case 2: // Pitch A + Reverb (Preset 1)
+            loadPreset(1);
             processAudioPitchReverb(pRx, pTx);
             break;
 
-        default: // Segurança (caso currentState seja corrompido)
-            processAudioLoopback(pRx, pTx); // Default para Loopback
+        case 3: // Pitch Bb + Reverb (Preset 2)
+            loadPreset(2);
+            processAudioPitchReverb(pRx, pTx);
+            break;
+            
+        case 4: // Pitch Db + Reverb (Preset 3)
+            loadPreset(3);
+            processAudioPitchReverb(pRx, pTx);
+            break;
+
+        case 5: // Pitch Fb + Reverb (Preset 4)
+            loadPreset(4);
+            processAudioPitchReverb(pRx, pTx);
+            break;
+        case 6: // Flanger
+            processAudioPhaser(pRx, pTx);
+            break;
+
+        case 7: // Tremolo / AutoWah
+            processAudioAutoWah(pRx, pTx);
+            break;
+
+        default:
+            processAudioLoopback(pRx, pTx);
             break;
     }
 }

@@ -8,11 +8,17 @@
 // Precisamos de um "Pool" de memória. 8192 deve ser suficiente (aprox 170ms total)
 #define REVERB_MEM_SIZE 8192
 
-// --- TAMANHOS DOS ATRASOS (Delay Lengths) ---
-// Escolhidos para serem números primos (Prime Numbers) para evitar metalização.
-// Baseado em ~48kHz.
-// Para achar em ms divide por 48
-// Varia de 0 a 8160
+// --- ESTRUTURA DE DADOS ---
+typedef struct {
+    Uint16 enablePitch;   // 0 = Desligado, 1 = Ligado
+    Uint32 pitchRatio;    // Valor do Ratio (Ex: 36780)
+    Int16 cGains[4];      // Os 4 ganhos dos Combs (C1..C4)
+    Int16 apGain;         // Ganho dos All-Pass
+} ReverbPreset;
+
+// Declaração da variável global que será usada nas funções de áudio
+extern ReverbPreset g_currentPreset;
+
 #define C1_LEN 1687 // ~35ms
 #define C2_LEN 1601 // ~33ms
 #define C3_LEN 2053 // ~42ms
