@@ -22,8 +22,9 @@ ALVOS = [
 
 # Parâmetros do Reverb (Cauda longa que você ajustou)
 C_LENS = [1687, 1601, 2053, 2251]
-C_GAINS = [0.8340, 0.9283, 0.9433, 0.7350] 
-AP_GAIN = 0.6239
+#C_GAINS = [0.8340, 0.9283, 0.9433, 0.7350] 
+C_GAINS = [0.6340, 0.7283, 0.7433, 0.7350] 
+AP_GAIN = 0.7
 ENABLE_LPF = True # Filtro para amaciar a voz
 
 # ==============================================================================
@@ -120,7 +121,7 @@ class ProcessadorAudio:
             
         return output
 
-    def reverb(self, audio, c_lens, c_gains, ap_gain):
+    def reverb(self, audio, c_lens, c_gains, ap_gain, mix = 0.2):
         output = np.zeros_like(audio)
         combs = [np.zeros(l) for l in c_lens]
         aps = [np.zeros(l) for l in [225, 341]]
@@ -134,7 +135,7 @@ class ProcessadorAudio:
             # Pré-filtro (Amaciar voz)
             lpf_state += lpf_alpha * (x - lpf_state)
             input_val = lpf_state * 0.25
-            
+          
             # Combs
             sum_combs = 0.0
             for k in range(4):
@@ -143,7 +144,7 @@ class ProcessadorAudio:
                 combs[k][idx_c[k]] = new_val
                 sum_combs += buf_val
                 idx_c[k] = (idx_c[k] + 1) % c_lens[k]
-            
+        
             # All Pass
             ap1_in = sum_combs
             ap1_buf = aps[0][idx_ap[0]]
@@ -157,7 +158,12 @@ class ProcessadorAudio:
             ap2_out = ap2_buf - (ap2_in * ap_gain)
             idx_ap[1] = (idx_ap[1] + 1) % 341
             
-            output[i] = ap2_out
+            
+            sinal_dry = x          # O som original (já com pitch shift)
+            sinal_wet = ap2_out    # O som do reverb
+            
+            # Mistura proporcional
+            output[i] = (sinal_dry * (1.0 - mix)) + (sinal_wet * mix)
             
         return output
 
@@ -194,7 +200,7 @@ def main():
         pitched = proc.pitch_shift(audio, ratio)
         
         # Passo B: Reverb
-        final = proc.reverb(pitched, C_LENS, C_GAINS, AP_GAIN)
+        final = proc.reverb(pitched, C_LENS, C_GAINS, AP_GAIN, mix = 0.4)
         
         # Salvar
         max_val = np.max(np.abs(final))

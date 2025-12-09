@@ -14,7 +14,8 @@ ARQUIVO_SAIDA = "reverb_teste.wav"
 
 # --- 1. TAMANHOS DOS BUFFERS (Delay Lengths) ---
 # Copie os valores que você quer testar (números primos recomendados)
-C_LENS = [1687, 1601, 2053, 2251]  # Combs (Sala)
+C_LENS = [107, 255, 3356, 1873]
+#C_LENS = [1687, 1601, 2053, 2251]  # Combs (Sala)
 AP_LENS = [225, 341]               # All-Pass (Difusão)
 
 # --- 2. GANHOS (0.0 a 1.0) ---
