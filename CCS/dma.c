@@ -33,7 +33,9 @@ Uint16 g_txBuffer[AUDIO_BUFFER_SIZE]; // De onde o "Headphone" lê (BUFFER DE SA
 // ================= VARIÁVEIS DO PITCH SHIFT =================
 #define PS_BUFFER_LEN 4096        // buffer circular grande
 #define PS_CROSSFADE 128          // tamanho do crossfade
-#define PITCH_RATIO 0.5f         // 1.0 = igual, 1.3 = +30%, 0.8 = -20%
+
+float pitch_ratio = 1.0f;
+
 
 #pragma DATA_SECTION(psBuffer, "dmaMem")
 Int16 psBuffer[PS_BUFFER_LEN];
@@ -60,6 +62,14 @@ Int16 *pAP1, *pAP2;
 // Índices atuais (Cabeçotes de Leitura/Escrita)
 int idxC1 = 0, idxC2 = 0, idxC3 = 0, idxC4 = 0;
 int idxAP1 = 0, idxAP2 = 0;
+
+// Ganhos do reverb (substituem os #define)
+Int16 c1_gain = 27524;
+Int16 c2_gain = 27524;
+Int16 c3_gain = 27524;
+Int16 c4_gain = 27524;
+Int16 ap_gain = 16384;
+// ============================================================
 
 //(ISRs):
 extern void VECSTART(void);
@@ -236,6 +246,33 @@ void processAudioLoopback(Uint16* rxBlock, Uint16* txBlock)
     }
 }
 
+typedef struct {
+    float pitch;
+    Int16 c1, c2, c3, c4, ap;
+} Preset;
+
+Preset presets[6] = {
+    // PITCH,   C1, C2, C3, C4, AP
+    {1.00f, 27524,27524,27524,27524,16384}, // 0: só reverb
+    {1.10f, 26000,26000,27000,28000,15000}, // 1
+    {1.3f, 27000,26000,25000,25000,14000}, // 2
+    {0.85f, 28000,28000,28000,28000,17000}, // 3
+    {0.70f, 30000,29000,28000,26000,18000}, // 4
+    {1.50f, 24000,25000,26000,24000,13000}  // 5
+};
+
+void loadPreset(int id)
+{
+    pitch_ratio = presets[id].pitch;
+
+    c1_gain = presets[id].c1;
+    c2_gain = presets[id].c2;
+    c3_gain = presets[id].c3;
+    c4_gain = presets[id].c4;
+    ap_gain = presets[id].ap;
+}
+
+
 
 void processAudioReverb(Uint16* rxBlock, Uint16* txBlock)
 {
@@ -260,7 +297,7 @@ void processAudioReverb(Uint16* rxBlock, Uint16* txBlock)
             Int16 buffVal1 = pC1[idxC1];
             combOut1 = buffVal1; // A saída é o que estava no buffer
             // Feedback: Buffer = Input + (Output * Gain)
-            tempCalc = (Int32)(x_n >> 2) + (((Int32)buffVal1 * C1_GAIN) >> 15);
+            tempCalc = (Int32)(x_n >> 2) + (((Int32)buffVal1 * c1_gain) >> 15);
             pC1[idxC1] = (Int16)tempCalc;
             // Avançar índice circular
             if (++idxC1 >= C1_LEN) idxC1 = 0;
@@ -268,21 +305,21 @@ void processAudioReverb(Uint16* rxBlock, Uint16* txBlock)
             // Comb 2
             Int16 buffVal2 = pC2[idxC2];
             combOut2 = buffVal2;
-            tempCalc = (Int32)(x_n >> 2) + (((Int32)buffVal2 * C2_GAIN) >> 15);
+            tempCalc = (Int32)(x_n >> 2) + (((Int32)buffVal2 * c2_gain) >> 15);
             pC2[idxC2] = (Int16)tempCalc;
             if (++idxC2 >= C2_LEN) idxC2 = 0;
 
             // Comb 3
             Int16 buffVal3 = pC3[idxC3];
             combOut3 = buffVal3;
-            tempCalc = (Int32)(x_n >> 2) + (((Int32)buffVal3 * C3_GAIN) >> 15);
+            tempCalc = (Int32)(x_n >> 2) + (((Int32)buffVal3 * c3_gain) >> 15);
             pC3[idxC3] = (Int16)tempCalc;
             if (++idxC3 >= C3_LEN) idxC3 = 0;
 
             // Comb 4
             Int16 buffVal4 = pC4[idxC4];
             combOut4 = buffVal4;
-            tempCalc = (Int32)(x_n >> 2) + (((Int32)buffVal4 * C4_GAIN) >> 15);
+            tempCalc = (Int32)(x_n >> 2) + (((Int32)buffVal4 * c4_gain) >> 15);
             pC4[idxC4] = (Int16)tempCalc;
             if (++idxC4 >= C4_LEN) idxC4 = 0;
 
@@ -302,12 +339,12 @@ void processAudioReverb(Uint16* rxBlock, Uint16* txBlock)
             // Buffer_New = Input + Gain*Buffer
 
             // 1. Calcular Buffer Novo
-            tempCalc = (Int32)ap1_in + (((Int32)ap1_bufferVal * AP_GAIN) >> 15);
+            tempCalc = (Int32)ap1_in + (((Int32)ap1_bufferVal * ap_gain) >> 15);
             pAP1[idxAP1] = (Int16)tempCalc; // Grava no delay
 
             // 2. Calcular Saída
             // Output = Buffer_Old - (Gain * Input)  <-- Forma canônica mais segura
-            ap1_out = ap1_bufferVal - (Int16)(((Int32)ap1_in * AP_GAIN) >> 15);
+            ap1_out = ap1_bufferVal - (Int16)(((Int32)ap1_in * ap_gain) >> 15);
 
             if (++idxAP1 >= AP1_LEN) idxAP1 = 0;
 
@@ -375,7 +412,7 @@ void processAudioPitchShifter(Uint16* rxBlock, Uint16* txBlock)
         // =======================
         // 4) AVANÇA POSIÇÃO DE LEITURA
         // =======================
-        localRead += PITCH_RATIO;
+        localRead += pitch_ratio;
 
         if(localRead >= PS_BUFFER_LEN)
             localRead -= PS_BUFFER_LEN;
@@ -420,24 +457,39 @@ interrupt void dmaRxIsr(void)
 
     // --- SELETOR DE EFEITO ---
 
-    switch (currentState)
-    {
-        case 0:
-            processAudioPitchPlusReverb(pRx, pTx);
-            break;
-        case 1: // Flanger
-            processAudioReverb(pRx, pTx);
-            break;
+switch(currentState)
+{
+    case 0: // só reverb
+        loadPreset(0);
+        processAudioReverb(pRx, pTx);
+        break;
 
-        case 2: // Tremolo
-            processAudioPitchShifter(pRx, pTx);
-            break;
+    case 1:
+        loadPreset(1);
+        processAudioPitchPlusReverb(pRx, pTx);
+        break;
 
-        default: // Segurança (caso currentState seja corrompido)
-            processAudioLoopback(pRx, pTx); // Default para Loopback
-            break;
-    }
-}
+    case 2:
+        loadPreset(2);
+        processAudioPitchPlusReverb(pRx, pTx);
+        break;
+
+    case 3:
+        loadPreset(3);
+        processAudioPitchPlusReverb(pRx, pTx);
+        break;
+
+    case 4:
+        loadPreset(4);
+        processAudioPitchPlusReverb(pRx, pTx);
+        break;
+
+    case 5:
+        loadPreset(5);
+        processAudioPitchPlusReverb(pRx, pTx);
+        break;
+}}
+
 
 
 interrupt void dmaTxIsr(void)

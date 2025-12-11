@@ -98,7 +98,7 @@ void checkSwitch(void)
             }
             else
             {
-                currentState = 3; // (Faz loop 0 -> 3)
+                currentState = 5; // (Faz loop 0 -> 3)
             }
         }
     }
@@ -115,7 +115,7 @@ void checkSwitch(void)
             toggleLED();
             sw2Ready = 0; // Marcar como "usado"
 
-            if (currentState != 3)
+            if (currentState != 5)
             {
                 currentState++;
             }
