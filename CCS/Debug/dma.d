@@ -52,8 +52,6 @@ dma.obj: /home/caco/ti/ccs1281/ccs/tools/compiler/c5500_4.4.1/include/unaccess.h
 dma.obj: /home/caco/workspace_v12/DSP-EZDSP5502/CCS/include/icomplex.h
 dma.obj: ../pitch_params.h
 dma.obj: ../reverb_params.h
-dma.obj: ../phaser_params.h
-dma.obj: ../auto_wah_params.h
 
 ../dma.c:
 
@@ -158,8 +156,4 @@ dma.obj: ../auto_wah_params.h
 ../pitch_params.h:
 
 ../reverb_params.h:
-
-../phaser_params.h:
-
-../auto_wah_params.h:
 
