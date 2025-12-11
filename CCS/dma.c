@@ -5,7 +5,7 @@
 #include <math.h>
 #include "icomplex.h"
 
-#include "pitch_params.h"
+//#include "pitch_params.h"
 #include "reverb_params.h"
 #define AUDIO_BUFFER_SIZE 4096 // Tamanho TOTAL
 
@@ -19,8 +19,8 @@
 extern volatile Uint8 currentState;
 // Flag para controlar qual bloco (Ping ou Pong) está ativo
 static volatile Uint16 dmaPingPongFlag = 0;
-// =====================================
-//---------------   VARIÁVEIS PARA OS BUFFERS DE ENTRADA E SAIDA     -------------------------
+// ========================================================
+// ==================== VARIAVEIS BUFFER DE ENTRADA E SAIDA==========================
 #pragma DATA_SECTION(g_rxBuffer, "dmaMem")
 #pragma DATA_ALIGN(g_rxBuffer, 4096)
 Uint16 g_rxBuffer[AUDIO_BUFFER_SIZE]; // Onde o "Line In" escreve (BUFFER DE ENTRADA)
@@ -28,7 +28,19 @@ Uint16 g_rxBuffer[AUDIO_BUFFER_SIZE]; // Onde o "Line In" escreve (BUFFER DE ENT
 #pragma DATA_SECTION(g_txBuffer, "dmaMem")
 #pragma DATA_ALIGN(g_txBuffer, 4096)
 Uint16 g_txBuffer[AUDIO_BUFFER_SIZE]; // De onde o "Headphone" lê (BUFFER DE SAÍDA)
+// ========================================================
 
+// ================= VARIÁVEIS DO PITCH SHIFT =================
+#define PS_BUFFER_LEN 4096       // buffer circular grande
+#define PS_CROSSFADE 128          // tamanho do crossfade
+#define PITCH_RATIO 0.8f         // 1.0 = igual, 1.3 = +30%, 0.8 = -20%
+
+#pragma DATA_SECTION(psBuffer, "dmaMem")
+Int16 psBuffer[PS_BUFFER_LEN];
+
+float readPos = 0;       // posição de leitura flutuante
+Uint16 writePos = 0;     // posição de escrita
+// ============================================================
 
 // ================= VARIÁVEIS DO REVERB SCHROEDER =================
 
@@ -43,8 +55,6 @@ Int16 *pAP1, *pAP2;
 // Índices atuais (Cabeçotes de Leitura/Escrita)
 int idxC1 = 0, idxC2 = 0, idxC3 = 0, idxC4 = 0;
 int idxAP1 = 0, idxAP2 = 0;
-// ================= VARIÁVEIS DO PITCH SHIFT =================
-// ============================================================
 
 //(ISRs):
 extern void VECSTART(void);
@@ -320,8 +330,55 @@ void processAudioReverb(Uint16* rxBlock, Uint16* txBlock)
 
 void processAudioPitchShifter(Uint16* rxBlock, Uint16* txBlock)
 {
-    
+    int i;
+    float localRead = readPos;
+
+    for(i = 0; i < AUDIO_BLOCK_SIZE; i++)
+    {
+        Int16 x = rxBlock[i];
+
+        // =======================
+        // 1) GRAVA NO BUFFER
+        // =======================
+        psBuffer[writePos] = x;
+        writePos++;
+        if(writePos >= PS_BUFFER_LEN) writePos = 0;
+
+        // =======================
+        // 2) LÊ COM POSIÇÃO FRACIONÁRIA (interpolação linear)
+        // =======================
+        int p0 = (int)localRead;
+        int p1 = p0 + 1;
+        if(p1 >= PS_BUFFER_LEN) p1 = 0;
+
+        float frac = localRead - p0;
+        float y = (1.0f - frac)*psBuffer[p0] + frac*psBuffer[p1];
+
+        // =======================
+        // 3) CROSSFADE AUTOMÁTICO PARA EVITAR CLICKS
+        // =======================
+        float dist = fabs((float)writePos - localRead);
+        if(dist < PS_CROSSFADE)
+        {
+            float g = dist / PS_CROSSFADE;   // 1 → 0
+            y *= g;
+        }
+
+        // salvar saída
+        txBlock[i] = (Int16)y;
+
+        // =======================
+        // 4) AVANÇA POSIÇÃO DE LEITURA
+        // =======================
+        localRead += PITCH_RATIO;
+
+        if(localRead >= PS_BUFFER_LEN)
+            localRead -= PS_BUFFER_LEN;
+    }
+
+    readPos = localRead;
 }
+
 
 
 interrupt void dmaRxIsr(void)
@@ -393,8 +450,14 @@ void initReverb(void)
 }
 
 void initPitchShift(void) {
-    
+    int i;
+    for(i=0; i<PS_BUFFER_LEN; i++)
+        psBuffer[i] = 0;
+
+    readPos = 0;
+    writePos = 0;
 }
+
 
 void initAlgorithms(void) {
     initPitchShift();
