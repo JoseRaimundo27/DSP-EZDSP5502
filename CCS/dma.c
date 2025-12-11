@@ -31,12 +31,17 @@ Uint16 g_txBuffer[AUDIO_BUFFER_SIZE]; // De onde o "Headphone" lê (BUFFER DE SA
 // ========================================================
 
 // ================= VARIÁVEIS DO PITCH SHIFT =================
-#define PS_BUFFER_LEN 4096       // buffer circular grande
+#define PS_BUFFER_LEN 4096        // buffer circular grande
 #define PS_CROSSFADE 128          // tamanho do crossfade
-#define PITCH_RATIO 0.8f         // 1.0 = igual, 1.3 = +30%, 0.8 = -20%
+#define PITCH_RATIO 0.5f         // 1.0 = igual, 1.3 = +30%, 0.8 = -20%
 
 #pragma DATA_SECTION(psBuffer, "dmaMem")
 Int16 psBuffer[PS_BUFFER_LEN];
+
+#pragma DATA_SECTION(pitchTemp, "dmaMem")
+Uint16 pitchTemp[AUDIO_BLOCK_SIZE];
+
+
 
 float readPos = 0;       // posição de leitura flutuante
 Uint16 writePos = 0;     // posição de escrita
@@ -379,7 +384,19 @@ void processAudioPitchShifter(Uint16* rxBlock, Uint16* txBlock)
     readPos = localRead;
 }
 
+void processAudioPitchPlusReverb(Uint16* rxBlock, Uint16* txBlock)
+{
+    int i;
 
+    // 1) APLICA PITCH NO BLOCO DE ENTRADA → vai para pitchTemp
+    for(i = 0; i < AUDIO_BLOCK_SIZE; i++)
+        pitchTemp[i] = rxBlock[i]; // só cópia temporária
+
+    processAudioPitchShifter(pitchTemp, pitchTemp);
+
+    // 2) APLICA REVERB NA SAÍDA DO PITCH
+    processAudioReverb(pitchTemp, txBlock);
+}
 
 interrupt void dmaRxIsr(void)
 {
@@ -406,7 +423,7 @@ interrupt void dmaRxIsr(void)
     switch (currentState)
     {
         case 0:
-            processAudioLoopback(pRx,pTx);
+            processAudioPitchPlusReverb(pRx, pTx);
             break;
         case 1: // Flanger
             processAudioReverb(pRx, pTx);
