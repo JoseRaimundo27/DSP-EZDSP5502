@@ -7,7 +7,7 @@
 // Controla o pico do filtro.
 // Valor BAIXO (3000) = Pico ALTO (Apito forte/Funk)
 // Valor ALTO (30000) = Pico BAIXO (Som suave)
-#define AUTO_WAH_DAMP_Q15 3000
+#define AUTO_WAH_DAMP_Q15 30000
 
 // 2. Frequências Limite
 // 300Hz (Fechado - Grave) -> 1300 em Q15
@@ -18,7 +18,7 @@
 // 3. Sensibilidade
 // O quanto a força da palhetada abre o filtro.
 // 28000 é bem alto para garantir que o efeito abra totalmente.
-#define AUTO_WAH_SENSITIVITY_Q15 28000
+#define AUTO_WAH_SENSITIVITY_Q15 14000
 
 // 4. Velocidade do Envelope
 // Quão rápido o wah abre e fecha (Attack/Release).

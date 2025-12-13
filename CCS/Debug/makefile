@@ -12,8 +12,6 @@ ORDERED_OBJS += \
 "./dma.obj" \
 "./main.obj" \
 "./vectors_dma4.obj" \
-"./fft/ibit_rev.obj" \
-"./fft/intrinsic_fft.obj" \
 "./include/ezdsp5502.obj" \
 "./include/ezdsp5502_i2c.obj" \
 "./include/ezdsp5502_i2cgpio.obj" \
@@ -31,10 +29,8 @@ RMDIR := rm -rf
 # All of the sources participating in the build are defined here
 -include sources.mk
 -include subdir_vars.mk
--include fft/subdir_vars.mk
 -include include/subdir_vars.mk
 -include subdir_rules.mk
--include fft/subdir_rules.mk
 -include include/subdir_rules.mk
 -include objects.mk
 
@@ -153,9 +149,9 @@ aic3204_dma_flanger.out: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
 # Other Targets
 clean:
 	-$(RM) $(EXE_OUTPUTS__QUOTED)
-	-$(RM) "aic3204.obj" "dma.obj" "main.obj" "vectors_dma4.obj" "fft/ibit_rev.obj" "fft/intrinsic_fft.obj" "include/ezdsp5502.obj" "include/ezdsp5502_i2c.obj" "include/ezdsp5502_i2cgpio.obj" "include/ezdsp5502_mcbsp.obj" 
+	-$(RM) "aic3204.obj" "dma.obj" "main.obj" "vectors_dma4.obj" "include/ezdsp5502.obj" "include/ezdsp5502_i2c.obj" "include/ezdsp5502_i2cgpio.obj" "include/ezdsp5502_mcbsp.obj" 
 	-$(RM) "vectors_dma4.d" 
-	-$(RM) "aic3204.d" "dma.d" "main.d" "fft/ibit_rev.d" "fft/intrinsic_fft.d" "include/ezdsp5502.d" "include/ezdsp5502_i2c.d" "include/ezdsp5502_i2cgpio.d" "include/ezdsp5502_mcbsp.d" 
+	-$(RM) "aic3204.d" "dma.d" "main.d" "include/ezdsp5502.d" "include/ezdsp5502_i2c.d" "include/ezdsp5502_i2cgpio.d" "include/ezdsp5502_mcbsp.d" 
 	-@echo 'Finished clean'
 	-@echo ' '
 

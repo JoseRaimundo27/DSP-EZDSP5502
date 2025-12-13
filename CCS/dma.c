@@ -263,7 +263,7 @@ void processAudioLoopback(Uint16* rxBlock, Uint16* txBlock)
 // Variável Global que o Loop de Áudio vai ler
 ReverbPreset g_currentPreset;
 
-const ReverbPreset g_presetBank[6] = {
+const ReverbPreset g_presetBank[8] = {
     // 0: Reverb Puro (Sem Pitch) - "Warm Hall"
     { 0, 0, {28180, 28180, 27850, 27100}, 19660 },
 
@@ -283,14 +283,18 @@ const ReverbPreset g_presetBank[6] = {
     // Ratio Fb = 29192
     { 1, 32017, {28500, 28500, 28500, 28500}, 22000 },
     
-    // 5: Outro efeito extra (Ex: Monstro total -12 semi)
+    // 5: Pitch GHTH
     // Ratio -12 = 65535
-    { 1, 32957, {28000, 28000, 28000, 28000}, 20000 }
+    { 1, 32957, {28000, 28000, 28000, 28000}, 20000 },
+
+    // 6: Phaser
+    { 1, 50000, {0, 0, 0, 0}, 0 },
+    // 7: Auto-Wah
+    { 1, 17000, {0, 0, 0, 0}, 0 }
 };
 
 
 void loadPreset(int index) {
-    if (index < 0 || index > 5) return;
     
     g_currentPreset = g_presetBank[index];
 
@@ -390,7 +394,7 @@ void processAudioReverb(Uint16* rxBlock, Uint16* txBlock)
         }
 }
 
-// Pitch Shifter com Interpolação Linear e Janela Senoidal (Sem Float)
+// Pitch Shifter com Interpolação Linear e Janela Triangular (Sem Float)
 void processAudioPitchShifter(Uint16* rxBlock, Uint16* txBlock)
 {
     int i;
@@ -484,6 +488,20 @@ void processAudioPitchReverb(Uint16* rxBlock, Uint16* txBlock)
     processAudioPitchShifter(rxBlock, txBlock);
     processAudioReverb(txBlock, txBlock);
 }
+
+void processAudioPitchPhaser(Uint16* rxBlock, Uint16* txBlock)
+{
+    processAudioPitchShifter(rxBlock, txBlock);
+    processAudioPhaser(txBlock, txBlock);
+}
+
+void processAudioPitchAutoWah(Uint16* rxBlock, Uint16* txBlock)
+{
+    processAudioPitchShifter(rxBlock, txBlock);
+    processAudioAutoWah(txBlock, txBlock);
+}
+
+
 
 
 void processAudioPhaser(Uint16* rxBlock, Uint16* txBlock)
@@ -678,11 +696,13 @@ interrupt void dmaRxIsr(void)
             break;
 
         case 7: // Phaser
-            processAudioPhaser(pRx, pTx);
+            loadPreset(6);
+            processAudioPitchPhaser(pRx, pTx);
             break;
 
         case 8: //Autowah
-            processAudioAutoWah(pRx, pTx);
+            loadPreset(7);
+            processAudioPitchAutoWah(pRx, pTx);
             break;
 
         default:
