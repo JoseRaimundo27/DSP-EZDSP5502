@@ -699,12 +699,13 @@ interrupt void dmaRxIsr(void)
             processAudioPitchReverb(pRx, pTx);
             break;
 
-        case 7: // Tremolo / AutoWah
-            processAudioAutoWah(pRx, pTx);
+        case 7: // Phaser
+            processAudioPhaser(pRx, pTx);
             break;
 
-        case 8:
-            processAudioPhaser(pRx, pTx);
+
+        case 8: //Autowah
+            processAudioAutoWah(pRx, pTx);
             break;
 
         default:
