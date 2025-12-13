@@ -291,23 +291,23 @@ const ReverbPreset g_presetBank[6] = {
 
     // 1: Pitch A (Grave -5 semi) + Reverb Longo
     // Ratio A = 43738
-    { 1, 43738, {29000, 28500, 28000, 27500}, 21000 },
+    { 1, 35219, {29000, 28500, 28000, 27500}, 21000 },
 
     // 2: Pitch Bb (Rádio -4 semi) + Reverb Médio
     // Ratio Bb = 41284
-    { 1, 41284, {28180, 28180, 27850, 27100}, 19660 },
+    { 1, 33923, {28180, 28180, 27850, 27100}, 19660 },
 
     // 3: Pitch Db (Leve -1 semi) + Reverb Curto
     // Ratio Db = 34715
-    { 1, 34715, {26000, 26000, 25000, 24000}, 16000 },
+    { 1, 34514, {26000, 26000, 25000, 24000}, 16000 },
 
     // 4: Pitch Fb (Agudo +2 semi) + Reverb Denso
     // Ratio Fb = 29192
-    { 1, 29192, {28500, 28500, 28500, 28500}, 22000 },
+    { 1, 32017, {28500, 28500, 28500, 28500}, 22000 },
     
     // 5: Outro efeito extra (Ex: Monstro total -12 semi)
     // Ratio -12 = 65535
-    { 1, 65535, {28000, 28000, 28000, 28000}, 20000 }
+    { 1, 32957, {28000, 28000, 28000, 28000}, 20000 }
 };
 
 
@@ -694,12 +694,17 @@ interrupt void dmaRxIsr(void)
             loadPreset(4);
             processAudioPitchReverb(pRx, pTx);
             break;
-        case 6: // Flanger
-            processAudioPhaser(pRx, pTx);
+        case 6:
+            loadPreset(5);
+            processAudioPitchReverb(pRx, pTx);
             break;
 
         case 7: // Tremolo / AutoWah
             processAudioAutoWah(pRx, pTx);
+            break;
+
+        case 8:
+            processAudioPhaser(pRx, pTx);
             break;
 
         default:
