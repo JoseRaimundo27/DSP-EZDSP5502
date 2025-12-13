@@ -431,7 +431,6 @@ void processAudioPitchShifter(Uint16* rxBlock, Uint16* txBlock)
     Int16 sA, sB;
     Int16 gainA, gainB;
     Int32 mix32;
-    Uint16 tblIdx;
 
     for (i = 0; i < AUDIO_BLOCK_SIZE; i++)
     {
@@ -472,13 +471,25 @@ void processAudioPitchShifter(Uint16* rxBlock, Uint16* txBlock)
         Int16 vB1 = g_pitchBuffer[idxB_1];
         sB = vB0 + (Int16)(((Int32)(vB1 - vB0) * fracB) >> 16);
 
-        // Ganhos (Janela Senoidal)
-        if (normPosA < 32768) gainA = g_sineWindow[normPosA >> 7];
-        else                  gainA = g_sineWindow[(65535 - normPosA) >> 7];
-
-        if (normPosB < 32768) gainB = g_sineWindow[normPosB >> 7];
-        else                  gainB = g_sineWindow[(65535 - normPosB) >> 7];
-
+        // Ganhos (Janela triangular)
+         // Canal A
+        if (normPosA < 32768) {
+            // Primeira metade: crescente de 0 a 32767
+            // normPosA >> 1 converte 0-32767 para 0-16383, depois <<1 mantém paridade
+            gainA = (Int16)(normPosA);  // 0 a 32767
+        } else {
+            // Segunda metade: decrescente de 32767 a 0
+            // 65535 - normPosA: 32767 a 0 quando normPosA: 32768 a 65535
+            gainA = (Int16)(65535 - normPosA);
+        }
+        
+        // Canal B
+        if (normPosB < 32768) {
+            gainB = (Int16)(normPosB);
+        } else {
+            gainB = (Int16)(65535 - normPosB);
+        }
+        
         // Mix
         mix32 = ((Int32)sA * gainA) + ((Int32)sB * gainB);
         y_n = (Int16)(mix32 >> 15);
