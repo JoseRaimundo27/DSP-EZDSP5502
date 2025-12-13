@@ -389,7 +389,7 @@ void processAudioReverb(Uint16* rxBlock, Uint16* txBlock)
 
 
             // --- SAÍDA FINAL ---
-            y_n = ap2_out;
+            y_n = x_n + ap2_out;
             txBlock[i] = y_n;
         }
 }
