@@ -3,7 +3,7 @@ import numpy as np
 # ==============================================================================
 # 🎛️ CONFIGURAÇÃO
 # ==============================================================================
-ARQUIVO_AUDIO = "AduiosOriginais/23-auto-wah.wav"
+ARQUIVO_AUDIO = "original.wav"
 
 def detectar_tom_medio(arquivo):
     print(f"Analisando '{arquivo}'... (Isso pode levar alguns segundos)")

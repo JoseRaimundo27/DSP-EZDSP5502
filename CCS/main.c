@@ -2,7 +2,6 @@
 #include "ezdsp5502_mcbsp.h"
 #include "ezdsp5502_i2cgpio.h"
 #include "dma.h"
-#include "timer.h"
 #include "lcd.h"
 #include "i2cgpio.h"
 #include "csl_chip.h"
@@ -12,9 +11,9 @@ void configPort(void);
 void checkTimer(void);
 void checkSwitch(void);
 
-extern void initPLL(void);
 extern void initAIC3204( );
 extern Int16 oled_start( );
+extern void oled_updateEffectName(Uint8 state);
 
 extern Uint16 timerFlag;
 Uint8 ledNum = 3;
@@ -29,13 +28,10 @@ static Uint8 sw1Ready = 1;
 static Uint8 sw2Ready = 1;
 
 void main(void)
-{
+     {
     /* Demo Initialization */
-    //initPLL( );
     EZDSP5502_init( );
-    //initLed( );
     configPort( );
-    //initTimer0( );
     initAIC3204( );
     initAlgorithms(); // initLFO e Reverb
     
@@ -44,8 +40,8 @@ void main(void)
     /* Start Demo */
     startAudioDma ( );
     EZDSP5502_MCBSP_init( );
-    //startTimer0( );
-    //oled_start( );
+    oled_start( );
+    oled_updateEffectName(currentState);
     
     while(1)
     {
@@ -98,8 +94,9 @@ void checkSwitch(void)
             }
             else
             {
-                currentState = 8; // (Faz loop 0 -> 3)
+                currentState = 8; // (Faz loop 0 -> 8)
             }
+            oled_updateEffectName(currentState);
         }
     }
     else // SW1 NÃO está premido
@@ -121,8 +118,9 @@ void checkSwitch(void)
             }
             else
             {
-                currentState = 0; // (Faz loop 3 -> 0)
+                currentState = 0; // (Faz loop 8 -> 0)
             }
+            oled_updateEffectName(currentState);
         }
     }
     else // SW2 NÃO está premido
